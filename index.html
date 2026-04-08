@@ -723,7 +723,7 @@
         <div style="padding:4px 8px 2px;">
           <button id="monitorSaveBtn" class="save-btn"
             onmousedown="startSaveHold('monitor',this)" onmouseup="cancelSaveHold(this)" onmouseleave="cancelSaveHold(this)"
-            ontouchstart="startSaveHold('monitor',this);event.preventDefault();" ontouchcancel="cancelSaveHold(this)"
+            ontouchstart="startSaveHold('monitor',this);event.preventDefault();" ontouchend="cancelSaveHold(this)" ontouchcancel="cancelSaveHold(this)"
             style="width:100%;padding:8px;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.4);border-radius:10px;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:0.06em;">Save</button>
         </div>
         <!-- CO2 Level (shown when CO2 is ON) -->
@@ -876,7 +876,7 @@
     <div style="padding:4px 8px 2px;">
       <button id="feedingSaveBtn" class="save-btn"
         onmousedown="startSaveHold('feeding',this)" onmouseup="cancelSaveHold(this)" onmouseleave="cancelSaveHold(this)"
-        ontouchstart="startSaveHold('feeding',this);event.preventDefault();" ontouchcancel="cancelSaveHold(this)"
+        ontouchstart="startSaveHold('feeding',this);event.preventDefault();" ontouchend="cancelSaveHold(this)" ontouchcancel="cancelSaveHold(this)"
         style="width:100%;padding:8px;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.4);border-radius:10px;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:0.06em;">Save</button>
     </div>
     <!-- Feeding Sweet Spot Bar -->
