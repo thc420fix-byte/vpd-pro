@@ -953,7 +953,7 @@
       <button onclick="setReminder(48)" data-i18n="reminder.48h" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">48時間後</button>
       <button onclick="setReminder(72)" data-i18n="reminder.72h" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">72時間後</button>
       <div style="display:flex;align-items:center;gap:4px;background:rgba(0,180,255,0.05);border:1px solid rgba(0,180,255,0.25);border-radius:8px;padding:4px 8px;">
-        <input id="reminderCustomHours" type="number" min="1" max="999" data-i18n-placeholder="reminder.custom_placeholder" placeholder="時間" style="width:100%;background:transparent;border:none;outline:none;color:rgba(150,220,255,0.9);font-size:0.9rem;font-weight:600;text-align:center;font-family:inherit;">
+        <input id="reminderCustomHours" type="number" min="0.1" max="999" step="0.5" data-i18n-placeholder="reminder.custom_placeholder" placeholder="時間" style="width:100%;background:transparent;border:none;outline:none;color:rgba(150,220,255,0.9);font-size:0.9rem;font-weight:600;text-align:center;font-family:inherit;">
         <button onclick="setReminderCustom()" data-i18n="reminder.custom_btn" style="background:rgba(0,180,255,0.2);border:1px solid rgba(0,180,255,0.4);border-radius:6px;color:rgba(150,220,255,0.9);font-size:0.72rem;padding:3px 8px;cursor:pointer;white-space:nowrap;">設定</button>
       </div>
     </div>
@@ -3572,14 +3572,15 @@ function classifyVpd(vpd, lo, hi) {
       const data = await resp.json();
       localStorage.setItem(reminderKey('scheduleId'), data.id);
       localStorage.setItem(reminderKey('scheduledAt'), scheduledAt);
-      showToast(tr('reminder.toast_set').replace('{h}', hours));
+      const hLabel = hours < 1 ? `${Math.round(hours * 60)}${appLang === 'ja' ? '分' : 'min'}` : `${hours}${appLang === 'ja' ? '時間' : 'h'}`;
+      showToast(tr('reminder.toast_set').replace('{h}', hLabel));
     } catch { showToast(tr('reminder.toast_fail')); }
     updateReminderUI();
   }
 
   async function setReminderCustom() {
-    const h = parseInt(document.getElementById('reminderCustomHours').value);
-    if (!h || h < 1) return;
+    const h = parseFloat(document.getElementById('reminderCustomHours').value);
+    if (!h || h < 0.1) return;
     await setReminder(h);
   }
 
