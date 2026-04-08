@@ -1189,7 +1189,13 @@
       btn.className = 'tent-btn' + (i === currentTent ? ' active' : '');
       btn.textContent = t.name;
       if (i > 0) btn.style.borderLeft = '1px solid var(--border)';
-      btn.onclick = () => i === currentTent ? renameTent(i) : selectTent(i);
+      btn._lastTap = 0;
+      btn.onclick = () => {
+        if (i !== currentTent) { selectTent(i); return; }
+        const now = Date.now();
+        if (now - btn._lastTap < 350) { renameTent(i); btn._lastTap = 0; }
+        else { btn._lastTap = now; }
+      };
       bar.appendChild(btn);
     });
     if (tents.length < MAX_TENTS) {
