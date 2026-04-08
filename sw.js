@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'vpd-pro-v6';
+const CACHE_VERSION = 'vpd-pro-v7';
 const ASSETS = [
   './index.html',
   './icon-192.png',
@@ -19,6 +19,29 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('push', e => {
+  const data = e.data ? e.data.json() : { title: '💧 Water Time!', body: '給水の時間です' };
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      tag: 'vpd-watering',
+      renotify: true,
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      if (list.length) return list[0].focus();
+      return clients.openWindow('./');
+    })
   );
 });
 

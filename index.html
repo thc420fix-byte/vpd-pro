@@ -879,6 +879,14 @@
         ontouchstart="startSaveHold('feeding',this);event.preventDefault();" ontouchend="cancelSaveHold(this)" ontouchcancel="cancelSaveHold(this)"
         style="width:100%;padding:8px;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.4);border-radius:10px;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:0.06em;">Save</button>
     </div>
+    <!-- Push Reminder Row -->
+    <div id="reminderRow" style="padding:2px 8px 4px;">
+      <div id="reminderActiveBox" style="display:none;background:rgba(0,180,255,0.07);border:1px solid rgba(0,180,255,0.3);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:0.75rem;color:rgba(150,220,255,0.9);flex:1;">🔔 <span id="reminderTimeLabel">—</span></span>
+        <button onclick="cancelReminder()" style="background:transparent;border:1px solid rgba(255,100,100,0.5);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.68rem;padding:2px 8px;cursor:pointer;">取消</button>
+      </div>
+      <button id="reminderSetBtn" onclick="openReminderModal()" style="width:100%;padding:6px;background:rgba(0,180,255,0.07);border:1px solid rgba(0,180,255,0.25);border-radius:8px;color:rgba(150,220,255,0.85);font-size:0.8rem;cursor:pointer;letter-spacing:0.02em;">🔔 次回給水リマインダーを設定</button>
+    </div>
     <!-- Feeding Sweet Spot Bar -->
     <div id="feedingSpotBar" style="display:none;flex-direction:column;gap:2px;padding:4px 2px;border-top:1px solid rgba(0,255,136,0.15);margin-top:2px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
@@ -932,6 +940,24 @@
     <div id="savePopupTitle" style="font-size:1.1rem;font-weight:700;color:var(--accent);margin-bottom:12px;">Saved!</div>
     <div id="savePopupBody" style="font-size:0.82rem;color:var(--text);line-height:1.8;"></div>
     <div style="margin-top:16px;font-size:0.72rem;color:var(--text);opacity:0.5;" data-i18n="popup.tap_to_close">タップして閉じる</div>
+  </div>
+</div>
+
+<!-- リマインダーモーダル -->
+<div id="reminderModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--surface2);border:1px solid rgba(0,180,255,0.4);border-radius:14px;padding:24px;width:82%;max-width:320px;">
+    <div style="font-size:1rem;color:rgba(150,220,255,0.95);font-weight:700;margin-bottom:4px;text-align:center;">🔔 次回給水リマインダー</div>
+    <div style="font-size:0.72rem;color:var(--text);opacity:0.6;text-align:center;margin-bottom:16px;">何時間後に通知を送りますか？</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <button onclick="setReminder(24)" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">24時間後</button>
+      <button onclick="setReminder(48)" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">48時間後</button>
+      <button onclick="setReminder(72)" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">72時間後</button>
+      <div style="display:flex;align-items:center;gap:4px;background:rgba(0,180,255,0.05);border:1px solid rgba(0,180,255,0.25);border-radius:8px;padding:4px 8px;">
+        <input id="reminderCustomHours" type="number" min="1" max="999" placeholder="時間" style="width:100%;background:transparent;border:none;outline:none;color:rgba(150,220,255,0.9);font-size:0.9rem;font-weight:600;text-align:center;font-family:inherit;">
+        <button onclick="setReminderCustom()" style="background:rgba(0,180,255,0.2);border:1px solid rgba(0,180,255,0.4);border-radius:6px;color:rgba(150,220,255,0.9);font-size:0.72rem;padding:3px 8px;cursor:pointer;white-space:nowrap;">設定</button>
+      </div>
+    </div>
+    <button onclick="closeReminderModal()" style="width:100%;padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--text);font-size:0.85rem;cursor:pointer;opacity:0.7;">キャンセル</button>
   </div>
 </div>
 
@@ -1310,6 +1336,7 @@
     renderStageTimeline(logs);
     renderPhotoTimeline(logs);
     renderFertLog(logs);
+    if (typeof updateReminderUI === 'function') updateReminderUI();
   }
   async function saveCurrentTentState() {
     const t = tents[currentTent];
@@ -3446,6 +3473,126 @@ function classifyVpd(vpd, lo, hi) {
   }
 
   </script>
+
+  <!-- ── Push Notification / Reminder ───────────────────────────────────────── -->
+  <script>
+  const PUSH_SERVER = 'https://vpd-push-worker.thc420fix.workers.dev';
+  const VAPID_PUBLIC_KEY = 'BBoc4StKxUF3g5ko8k6eY56GEbgayjmlXHZOR6_vXiwHcbI79g56r-nbMyHNYoO1XyhLsrAsVKuwSTNObwU0yH0';
+
+  function urlB64ToUint8(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, c => c.charCodeAt(0));
+  }
+
+  function reminderKey(suffix) {
+    return `reminder_${currentTent}_${suffix}`;
+  }
+
+  async function getPushSubId() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return null;
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8(VAPID_PUBLIC_KEY)
+      });
+    }
+    // Always re-register to ensure server has latest subscription
+    try {
+      const resp = await fetch(`${PUSH_SERVER}/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON())
+      });
+      const data = await resp.json();
+      return data.id;
+    } catch { return null; }
+  }
+
+  async function setReminder(hours) {
+    const subId = await getPushSubId();
+    if (!subId) { showToast('⚠ 通知の許可が必要です'); return; }
+    const tentName = tents[currentTent]?.name || 'Tent';
+    const scheduledAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
+    try {
+      const resp = await fetch(`${PUSH_SERVER}/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionId: subId,
+          title: '💧 Water Time!',
+          body: `${tentName} の給水時間です`,
+          scheduledAt
+        })
+      });
+      const data = await resp.json();
+      localStorage.setItem(reminderKey('scheduleId'), data.id);
+      localStorage.setItem(reminderKey('scheduledAt'), scheduledAt);
+      showToast(`🔔 ${hours}時間後にリマインダーを設定しました`);
+    } catch { showToast('⚠ リマインダー設定に失敗しました'); }
+    closeReminderModal();
+    updateReminderUI();
+  }
+
+  async function setReminderCustom() {
+    const h = parseInt(document.getElementById('reminderCustomHours').value);
+    if (!h || h < 1) return;
+    await setReminder(h);
+  }
+
+  async function cancelReminder() {
+    const scheduleId = localStorage.getItem(reminderKey('scheduleId'));
+    if (scheduleId) {
+      try { await fetch(`${PUSH_SERVER}/schedule/${scheduleId}`, { method: 'DELETE' }); } catch {}
+      localStorage.removeItem(reminderKey('scheduleId'));
+      localStorage.removeItem(reminderKey('scheduledAt'));
+    }
+    showToast('🔕 リマインダーをキャンセルしました');
+    updateReminderUI();
+  }
+
+  function updateReminderUI() {
+    const activeBox = document.getElementById('reminderActiveBox');
+    const setBtn    = document.getElementById('reminderSetBtn');
+    const label     = document.getElementById('reminderTimeLabel');
+    if (!activeBox || !setBtn) return;
+    const scheduledAt = localStorage.getItem(reminderKey('scheduledAt'));
+    if (scheduledAt && new Date(scheduledAt) > new Date()) {
+      const d = new Date(scheduledAt);
+      label.textContent = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} に通知予定`;
+      activeBox.style.display = 'flex';
+      setBtn.style.display = 'none';
+    } else {
+      if (scheduledAt) { // expired
+        localStorage.removeItem(reminderKey('scheduleId'));
+        localStorage.removeItem(reminderKey('scheduledAt'));
+      }
+      activeBox.style.display = 'none';
+      setBtn.style.display = 'block';
+    }
+  }
+
+  function openReminderModal() {
+    const m = document.getElementById('reminderModal');
+    m.style.display = 'flex';
+    document.getElementById('reminderCustomHours').value = '';
+  }
+
+  function closeReminderModal() {
+    document.getElementById('reminderModal').style.display = 'none';
+  }
+
+  // Update reminder UI whenever tent changes
+  const _origSwitchTent = window.switchTent;
+  document.addEventListener('DOMContentLoaded', () => {
+    updateReminderUI();
+  });
+  </script>
+
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
