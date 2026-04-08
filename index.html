@@ -677,7 +677,7 @@
         </div>
       </div>
       <div class="input-row" style="margin-top:2px;margin-bottom:2px; align-items:center; gap:8px; justify-content:center;">
-        <label style="font-size:0.95rem;color:var(--accent);font-weight:700;flex-shrink:0;height:28px;display:flex;align-items:center;transform:translateY(-2px);">Start Date</label>
+        <label style="font-size:0.95rem;color:var(--text);font-weight:700;flex-shrink:0;height:28px;display:flex;align-items:center;transform:translateY(-2px);">Start Date</label>
         <input id="stageStartDate" type="date" style="width:120px;flex-shrink:0;font-size:0.95rem;height:28px;background:transparent;color:var(--accent);border:none;border-bottom:1px dashed rgba(0,255,136,0.4);outline:none;color-scheme:dark;text-align:center;" onchange="applyStageStartDate(this.value)" onclick="try{this.showPicker()}catch(e){}">
         <button id="clearDateBtn" oncontextmenu="return false;" style="background:transparent;border:1px solid rgba(255,100,100,0.6);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.85rem;width:28px;height:28px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🗑</button>
       </div>
@@ -758,7 +758,7 @@
           <div id="spotInfo" style="font-size:0.63rem;color:var(--text);flex:1;line-height:1.4;text-align:center;"></div>
           <div style="display:flex;gap:4px;flex-shrink:0;">
             <button onclick="saveStageSpot()" style="background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);border-radius:6px;color:var(--accent);font-size:0.63rem;padding:3px 8px;cursor:pointer;white-space:nowrap;">📌 Save</button>
-            <button id="deleteSpotBtn" onmousedown="startSpotDeleteHold()" onmouseup="cancelSpotDeleteHold()" onmouseleave="cancelSpotDeleteHold()" ontouchstart="startSpotDeleteHold()" ontouchend="cancelSpotDeleteHold()" style="background:transparent;border:1px solid rgba(255,100,100,0.6);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.85rem;width:28px;height:28px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.1s;">🗑</button>
+            <button id="deleteSpotBtn" style="background:transparent;border:1px solid rgba(255,100,100,0.6);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.85rem;width:28px;height:28px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background 0.1s;">🗑</button>
           </div>
         </div>
       </div>
@@ -854,14 +854,14 @@
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <button class="small-btn" onclick="adjustEc(-0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
         <div style="display:flex;align-items:baseline;gap:5px;width:210px;justify-content:center;">
-          <span style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:90px;text-align:right;">Input EC</span>
+          <span id="inputEcLabel" style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:90px;text-align:right;">Input EC</span>
           <input id="ecInput" type="text" inputmode="decimal" placeholder="1.5" onfocus="this.select()" style="width:52px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
           <span style="font-size:1.1rem;color:var(--text);min-width:40px;">mS</span>
         </div>
         <button class="small-btn" onclick="adjustEc(0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">+</button>
       </div>
       <!-- Runoff EC -->
-      <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 0;">
+      <div id="runoffEcRow" style="display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 0;">
         <button class="small-btn" onclick="adjustRunoffEc(-0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
         <div style="display:flex;align-items:baseline;gap:5px;width:210px;justify-content:center;">
           <span style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:90px;text-align:right;">Runoff EC</span>
@@ -885,7 +885,7 @@
         <div id="feedingSpotInfo" style="font-size:0.68rem;color:var(--text);flex:1;line-height:1.3;text-align:center;overflow:hidden;"></div>
         <div style="display:flex;gap:4px;flex-shrink:0;">
           <button onclick="saveFeedingSpot()" style="background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);border-radius:6px;color:var(--accent);font-size:0.63rem;padding:3px 8px;cursor:pointer;white-space:nowrap;">📌 Save</button>
-          <button id="deleteFeedingSpotBtn" onclick="deleteFeedingSpot()" style="background:transparent;border:1px solid rgba(255,100,100,0.6);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.85rem;width:28px;height:28px;cursor:pointer;flex-shrink:0;display:none;align-items:center;justify-content:center;">🗑</button>
+          <button id="deleteFeedingSpotBtn" style="background:transparent;border:1px solid rgba(255,100,100,0.6);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.85rem;width:28px;height:28px;cursor:pointer;flex-shrink:0;display:none;align-items:center;justify-content:center;">🗑</button>
         </div>
       </div>
     </div>
@@ -1095,7 +1095,7 @@
     flower_early: { name: 'Flower Early',vpd: [0.8,1.2],  ppfd: [500,700],  ppfdCo2: [700,900],  color: '#ffaa00', co2: [0.9,1.4], ecInput: [1.4,1.8],  ecRunoff: [1.4,2.0],  temp: [20,26], hum: [50,60] },
     flower_late:  { name: 'Flower Late',vpd: [1.2,1.5],  ppfd: [700,900],  ppfdCo2: [900,1100], color: '#ff6644', co2: [1.3,1.7], ecInput: [1.6,2.0],  ecRunoff: [1.6,2.2],  temp: [18,24], hum: [40,50] },
     flush:        { name: 'Flush',      vpd: [1.0,1.2],  ppfd: [400,600],  ppfdCo2: [500,700],  color: '#cc88ff', co2: [1.0,1.3], ecInput: [0.1,0.3],  ecRunoff: [0.1,0.5],  temp: [18,24], hum: [45,55] },
-    dry:          { name: 'Dry',        vpd: [0.6,0.8],  ppfd: [0,0],      ppfdCo2: [0,0],      color: '#aaaaaa', co2: [0.6,0.8], ecInput: [0,0],      ecRunoff: [0,0],      temp: [15,21], hum: [45,55] },
+    dry:          { name: 'Dry',        vpd: [0.6,0.8],  ppfd: [0,0],      ppfdCo2: [0,0],      color: '#aaaaaa', co2: [0.6,0.8], ecInput: [0,0],      ecRunoff: [0,0],      temp: [15,16], hum: [58,62] },
   harvest:      { name: 'Harvest',    vpd: [0.6,0.9],  ppfd: [0,0],      ppfdCo2: [0,0],      color: '#f5c842', co2: [0.6,0.9], ecInput: [0,0],      ecRunoff: [0,0],      temp: null,    hum: null    }
   };
 
@@ -1456,51 +1456,75 @@
     if (typeof buildStageTable === 'function') buildStageTable();
   }
 
-  // ✕ button: short tap = clear current stage date, long press = clear all
+  // 🗑 button: double tap = clear current stage date, long press = clear all
   (() => {
     const btn = document.getElementById('clearDateBtn');
     if (!btn) return;
-    let timer = null;
+    let longTimer = null;
     let longPressed = false;
+    let lastTap = 0;
+
+    function flashRed() {
+      btn.style.borderColor = 'rgba(255,50,50,0.9)';
+      btn.style.background = 'rgba(255,50,50,0.2)';
+      setTimeout(() => { btn.style.borderColor = ''; btn.style.background = ''; }, 600);
+    }
+
+    // --- Touch ---
     btn.addEventListener('touchstart', e => {
       e.preventDefault();
       longPressed = false;
-      timer = setTimeout(() => {
+      longTimer = setTimeout(() => {
         longPressed = true;
-        timer = null;
+        longTimer = null;
         clearAllStageDates();
-        btn.style.borderColor = 'rgba(255,50,50,0.9)';
-        btn.style.background = 'rgba(255,50,50,0.2)';
-        setTimeout(() => { btn.style.borderColor = ''; btn.style.background = ''; }, 600);
+        flashRed();
       }, 600);
     }, { passive: false });
+
     btn.addEventListener('touchend', e => {
       e.preventDefault();
-      if (timer) { clearTimeout(timer); timer = null; }
-      if (!longPressed) clearStageStartDate();
+      if (longTimer) { clearTimeout(longTimer); longTimer = null; }
+      if (longPressed) return;
+      const now = Date.now();
+      if (now - lastTap < 350) {
+        lastTap = 0;
+        clearStageStartDate();
+      } else {
+        lastTap = now;
+      }
     });
-    btn.addEventListener('touchmove', e => {
-      if (timer) { clearTimeout(timer); timer = null; }
+
+    btn.addEventListener('touchmove', () => {
+      if (longTimer) { clearTimeout(longTimer); longTimer = null; }
     }, { passive: true });
-    // Mouse support (desktop / preview)
-    btn.addEventListener('mousedown', e => {
+
+    // --- Mouse (desktop / preview) ---
+    btn.addEventListener('mousedown', () => {
       longPressed = false;
-      timer = setTimeout(() => {
+      longTimer = setTimeout(() => {
         longPressed = true;
-        timer = null;
+        longTimer = null;
         clearAllStageDates();
-        btn.style.borderColor = 'rgba(255,50,50,0.9)';
-        btn.style.background = 'rgba(255,50,50,0.2)';
-        setTimeout(() => { btn.style.borderColor = ''; btn.style.background = ''; }, 600);
+        flashRed();
       }, 600);
     });
     btn.addEventListener('mouseup', () => {
-      if (timer) { clearTimeout(timer); timer = null; }
+      if (longTimer) { clearTimeout(longTimer); longTimer = null; }
     });
     btn.addEventListener('mouseleave', () => {
-      if (timer) { clearTimeout(timer); timer = null; }
+      if (longTimer) { clearTimeout(longTimer); longTimer = null; }
     });
-    btn.addEventListener('click', () => { if (!longPressed) clearStageStartDate(); });
+    btn.addEventListener('click', () => {
+      if (longPressed) return;
+      const now = Date.now();
+      if (now - lastTap < 350) {
+        lastTap = 0;
+        clearStageStartDate();
+      } else {
+        lastTap = now;
+      }
+    });
   })();
 
   async function applyStageStartDate(val) {
@@ -1939,27 +1963,88 @@
     update();
   }
 
-  let _spotDeleteTimer = null;
-  function startSpotDeleteHold() {
-    const btn = document.getElementById('deleteSpotBtn');
-    if (btn) btn.style.background = 'rgba(255,100,100,0.15)';
-    _spotDeleteTimer = setTimeout(async () => {
-      _spotDeleteTimer = null;
+  // 🗑 deleteSpotBtn: double tap = current stage, long press = all stages
+  (() => {
+    let longTimer = null;
+    let longFired = false;
+    let lastTap = 0;
+
+    function flashBtn(btn) {
+      btn.style.background = 'rgba(255,50,50,0.25)';
+      setTimeout(() => { btn.style.background = 'transparent'; }, 500);
+    }
+
+    async function deleteCurrentSpot() {
+      await deleteStageSpot();
+    }
+
+    async function deleteAllSpots() {
       const t = tents[currentTent];
       t.stageSpots = {};
       await dbPut('tents', t);
       updateSpotDisplay();
       update();
       showToast('All stage spots cleared');
-      const b = document.getElementById('deleteSpotBtn');
-      if (b) b.style.background = 'transparent';
-    }, 600);
-  }
-  function cancelSpotDeleteHold() {
-    if (_spotDeleteTimer) { clearTimeout(_spotDeleteTimer); _spotDeleteTimer = null; }
-    const btn = document.getElementById('deleteSpotBtn');
-    if (btn) btn.style.background = 'transparent';
-  }
+    }
+
+    window.addEventListener('load', () => {
+      const btn = document.getElementById('deleteSpotBtn');
+      if (!btn) return;
+
+      function startHold() {
+        longFired = false;
+        btn.style.background = 'rgba(255,100,100,0.15)';
+        longTimer = setTimeout(async () => {
+          longFired = true;
+          longTimer = null;
+          btn.style.background = 'transparent';
+          await deleteAllSpots();
+          flashBtn(btn);
+        }, 600);
+      }
+      function cancelHold() {
+        if (longTimer) { clearTimeout(longTimer); longTimer = null; }
+        btn.style.background = 'transparent';
+      }
+
+      // Touch
+      btn.addEventListener('touchstart', e => { e.preventDefault(); startHold(); }, { passive: false });
+      btn.addEventListener('touchend', async e => {
+        e.preventDefault();
+        cancelHold();
+        if (longFired) return;
+        const now = Date.now();
+        if (now - lastTap < 350) {
+          lastTap = 0;
+          await deleteCurrentSpot();
+          flashBtn(btn);
+        } else {
+          lastTap = now;
+        }
+      });
+      btn.addEventListener('touchmove', cancelHold, { passive: true });
+
+      // Mouse
+      btn.addEventListener('mousedown', startHold);
+      btn.addEventListener('mouseup', cancelHold);
+      btn.addEventListener('mouseleave', cancelHold);
+      btn.addEventListener('click', async () => {
+        if (longFired) return;
+        const now = Date.now();
+        if (now - lastTap < 350) {
+          lastTap = 0;
+          await deleteCurrentSpot();
+          flashBtn(btn);
+        } else {
+          lastTap = now;
+        }
+      });
+    });
+  })();
+
+  // 旧関数（互換用）
+  function startSpotDeleteHold() {}
+  function cancelSpotDeleteHold() {}
 
   async function saveFeedingSpot() {
     const t = tents[currentTent];
@@ -1998,6 +2083,73 @@
     updateFeedingHeader();
   }
 
+  async function deleteAllFeedingSpots() {
+    const t = tents[currentTent];
+    if (t.stageSpots) {
+      Object.keys(t.stageSpots).forEach(k => {
+        delete t.stageSpots[k].ph;
+        delete t.stageSpots[k].ec;
+        delete t.stageSpots[k].runoffEc;
+        delete t.stageSpots[k].fertilizers;
+      });
+    }
+    await dbPut('tents', t);
+    updateFeedingSpotDisplay();
+    updateFeedingHeader();
+    showToast('All feeding spots cleared');
+  }
+
+  // 🗑 deleteFeedingSpotBtn: double tap = current stage, long press = all stages
+  (() => {
+    let longTimer = null;
+    let longFired = false;
+    let lastTap = 0;
+
+    function flashBtn(btn) {
+      btn.style.background = 'rgba(255,50,50,0.25)';
+      setTimeout(() => { btn.style.background = 'transparent'; }, 500);
+    }
+
+    window.addEventListener('load', () => {
+      const btn = document.getElementById('deleteFeedingSpotBtn');
+      if (!btn) return;
+
+      function startHold() {
+        longFired = false;
+        btn.style.background = 'rgba(255,100,100,0.15)';
+        longTimer = setTimeout(async () => {
+          longFired = true; longTimer = null;
+          btn.style.background = 'transparent';
+          await deleteAllFeedingSpots();
+          flashBtn(btn);
+        }, 600);
+      }
+      function cancelHold() {
+        if (longTimer) { clearTimeout(longTimer); longTimer = null; }
+        btn.style.background = 'transparent';
+      }
+
+      btn.addEventListener('touchstart', e => { e.preventDefault(); startHold(); }, { passive: false });
+      btn.addEventListener('touchend', async e => {
+        e.preventDefault(); cancelHold();
+        if (longFired) return;
+        const now = Date.now();
+        if (now - lastTap < 350) { lastTap = 0; await deleteFeedingSpot(); flashBtn(btn); }
+        else { lastTap = now; }
+      });
+      btn.addEventListener('touchmove', cancelHold, { passive: true });
+      btn.addEventListener('mousedown', startHold);
+      btn.addEventListener('mouseup', cancelHold);
+      btn.addEventListener('mouseleave', cancelHold);
+      btn.addEventListener('click', async () => {
+        if (longFired) return;
+        const now = Date.now();
+        if (now - lastTap < 350) { lastTap = 0; await deleteFeedingSpot(); flashBtn(btn); }
+        else { lastTap = now; }
+      });
+    });
+  })();
+
   function updateFeedingSpotDisplay() {
     const bar = document.getElementById('feedingSpotBar');
     const infoEl = document.getElementById('feedingSpotInfo');
@@ -2013,7 +2165,7 @@
       if (delBtn) delBtn.style.display = 'none';
       return;
     }
-    if (delBtn) delBtn.style.display = '';
+    if (delBtn) delBtn.style.display = 'flex';
     const parts = [];
     if (spot.ph != null) parts.push(`pH ${spot.ph}`);
     if (spot.ec != null) parts.push(`EC ${spot.ec}mS`);
@@ -2042,7 +2194,7 @@
       if (delBtn) delBtn.style.display = 'none';
       return;
     }
-    if (delBtn) delBtn.style.display = '';
+    if (delBtn) delBtn.style.display = 'flex';
     const dT = (t.temp - spot.temp).toFixed(1);
     const dH = Math.round(t.hum - spot.hum);
     const dP = Math.round(t.ppfd - spot.ppfd);
@@ -3109,8 +3261,8 @@ function classifyVpd(vpd, lo, hi) {
     update();
   }
   function loadDrySettings() {
-    const temp = JSON.parse(localStorage.getItem('dryTemp') || '[15,21]');
-    const hum  = JSON.parse(localStorage.getItem('dryHum')  || '[45,55]');
+    const temp = JSON.parse(localStorage.getItem('dryTemp') || '[15,16]');
+    const hum  = JSON.parse(localStorage.getItem('dryHum')  || '[58,62]');
     const vpd  = JSON.parse(localStorage.getItem('dryVpd')  || '[0.6,0.8]');
     stages.dry.temp = temp;
     stages.dry.hum  = hum;
@@ -3199,6 +3351,38 @@ function classifyVpd(vpd, lo, hi) {
   }
 
   window.addEventListener('load', init);
+
+  /* === Runoff EC 表示/非表示（Input ECラベル長押し） === */
+  (() => {
+    function applyRunoffEcVisibility() {
+      const show = localStorage.getItem('showRunoffEc') !== 'false';
+      const row = document.getElementById('runoffEcRow');
+      if (row) row.style.display = show ? 'flex' : 'none';
+    }
+
+    function toggleRunoffEc() {
+      const current = localStorage.getItem('showRunoffEc') !== 'false';
+      localStorage.setItem('showRunoffEc', current ? 'false' : 'true');
+      applyRunoffEcVisibility();
+      showToast(current ? 'Runoff EC hidden' : 'Runoff EC shown');
+    }
+
+    applyRunoffEcVisibility();
+
+    const label = document.getElementById('inputEcLabel');
+    if (!label) return;
+    let timer = null;
+    label.addEventListener('touchstart', e => {
+      timer = setTimeout(() => { timer = null; toggleRunoffEc(); }, 600);
+    }, { passive: true });
+    label.addEventListener('touchend', () => { if (timer) { clearTimeout(timer); timer = null; } });
+    label.addEventListener('touchmove', () => { if (timer) { clearTimeout(timer); timer = null; } }, { passive: true });
+    label.addEventListener('mousedown', () => {
+      timer = setTimeout(() => { timer = null; toggleRunoffEc(); }, 600);
+    });
+    label.addEventListener('mouseup', () => { if (timer) { clearTimeout(timer); timer = null; } });
+    label.addEventListener('mouseleave', () => { if (timer) { clearTimeout(timer); timer = null; } });
+  })();
 
   /* === 長押しセーブ === */
   let saveHoldTimer = null;
