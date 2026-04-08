@@ -3518,8 +3518,18 @@ function classifyVpd(vpd, lo, hi) {
   }
 
   async function setReminder(hours) {
+    closeReminderModal();
+    showToast('🔔 設定中...');
     const subId = await getPushSubId();
-    if (!subId) { showToast('⚠ 通知の許可が必要です'); return; }
+    if (!subId) {
+      const perm = Notification.permission;
+      if (perm === 'denied') {
+        alert('🔔 通知が拒否されています。\niOSの場合: ホーム追加済みのPWAでのみ通知が使えます。\nSafari設定 → VPD PRO → 通知 → 許可に変更してください。');
+      } else {
+        showToast('⚠ 通知の設定に失敗しました');
+      }
+      return;
+    }
     const tentName = tents[currentTent]?.name || 'Tent';
     const scheduledAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
     try {
@@ -3537,8 +3547,7 @@ function classifyVpd(vpd, lo, hi) {
       localStorage.setItem(reminderKey('scheduleId'), data.id);
       localStorage.setItem(reminderKey('scheduledAt'), scheduledAt);
       showToast(`🔔 ${hours}時間後にリマインダーを設定しました`);
-    } catch { showToast('⚠ リマインダー設定に失敗しました'); }
-    closeReminderModal();
+    } catch { showToast('⚠ サーバーへの接続に失敗しました'); }
     updateReminderUI();
   }
 
