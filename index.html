@@ -1191,13 +1191,13 @@
       btn.textContent = t.name;
       if (i > 0) btn.style.borderLeft = '1px solid var(--border)';
       btn.onclick = () => {
-        if (i !== currentTent) { selectTent(i); return; }
         const now = Date.now();
         if (_tentLastTap[i] && now - _tentLastTap[i] < 350) {
           _tentLastTap[i] = 0;
           renameTent(i);
         } else {
           _tentLastTap[i] = now;
+          if (i !== currentTent) selectTent(i);
         }
       };
       bar.appendChild(btn);
