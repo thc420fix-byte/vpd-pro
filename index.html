@@ -2591,6 +2591,10 @@
       log.ec ? `⚡ Input EC: ${log.ec} mS${log.runoffEc ? '　🔄 Runoff: ' + log.runoffEc + ' mS' : ''}` : '',
       fertNames ? `🌿 ${fertNames}` : ''
     ].filter(Boolean));
+    // アクティブなリマインダーがなければ自動でモーダル表示
+    const hasReminder = localStorage.getItem(reminderKey('scheduledAt'));
+    const stillActive = hasReminder && new Date(hasReminder) > new Date();
+    if (!stillActive) setTimeout(() => openReminderModal(), 1800);
   }
 
   function adjustRunoffEc(delta) {
