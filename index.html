@@ -1018,7 +1018,7 @@
       'analysis.photo_timeline':'写真タイムライン','analysis.no_logs':'記録なし',
       'analysis.total_days':'合計: ','analysis.days':'日',
       'toast.last_tent':'最後のテントは削除できません','toast.input_error':'⚠ 入力値を確認してください',
-      'toast.sweet_spot_saved':'Sweet Spot 保存 ✓','toast.import_ok':'インポート完了 ✓',
+      'toast.import_ok':'インポート完了 ✓',
       'toast.import_bad_format':'⚠ 不正なファイル形式です','toast.import_error':'⚠ 読み込みエラー: ',
       'toast.danger_10min':'⚠ 危険状態が10分継続しています',
       'confirm.delete_tent':'"${name}" を削除しますか？\nこのテントのログも全て削除されます。',
@@ -1070,7 +1070,7 @@
       'analysis.photo_timeline':'Photo Timeline','analysis.no_logs':'No records',
       'analysis.total_days':'Total: ','analysis.days':' days',
       'toast.last_tent':'Cannot delete the last tent','toast.input_error':'⚠ Please check your input values',
-      'toast.sweet_spot_saved':'Sweet Spot Saved ✓','toast.import_ok':'Import complete ✓',
+      'toast.import_ok':'Import complete ✓',
       'toast.import_bad_format':'⚠ Invalid file format','toast.import_error':'⚠ Load error: ',
       'toast.danger_10min':'⚠ Danger state has continued for 10 minutes',
       'confirm.delete_tent':'Delete "${name}"?\nAll logs for this tent will also be deleted.',
@@ -1890,14 +1890,6 @@
     }
   }
 
-  async function saveWateringSchedule() {
-    const t = tents[currentTent];
-    if (!t) return;
-    t.wateringInterval = t.wateringInterval || 2;
-    await dbPut('tents', t);
-    updateWateringScheduleUI();
-  }
-
   let currentFertTab = 0;
 
   function renderFertilizerTabs() {
@@ -2092,10 +2084,6 @@
       });
     });
   })();
-
-  // 旧関数（互換用）
-  function startSpotDeleteHold() {}
-  function cancelSpotDeleteHold() {}
 
   async function saveFeedingSpot() {
     const t = tents[currentTent];
@@ -2637,28 +2625,6 @@
     if (diff >= 0.4) return { label: tr('ec.runoff_high'), action: tr('ec.runoff_high_action') };
     if (diff <= -0.3) return { label: tr('ec.runoff_low'), action: tr('ec.runoff_low_action') };
     return { label: tr('ec.stable'), action: tr('ec.stable_action') };
-  }
-
-  async function saveSweetSpot() {
-    const t = tents[currentTent];
-    if (!Array.isArray(t.sweetSpots)) t.sweetSpots = [];
-    const spot = {
-      id: Date.now() + '-sweet-' + currentTent,
-      ts: Date.now(),
-      stage: t.stage,
-      temp: t.temp,
-      hum: t.hum,
-      vpd: calcVPD(t.temp, t.hum),
-      ppfd: Number(t.ppfd || document.getElementById('ppfdInput').value || 0),
-      co2: t.co2,
-      inputEc: document.getElementById('ecInput').value || null,
-      runoffEc: document.getElementById('runoffEcInput').value || null
-    };
-    t.sweetSpots.unshift(spot);
-    t.sweetSpots = t.sweetSpots.slice(0, 8);
-    await dbPut('tents', t);
-    renderSweetSpots();
-    showToast(tr('toast.sweet_spot_saved'));
   }
 
   function renderSweetSpots() {
