@@ -2250,8 +2250,8 @@
   }
   function buildStageTable() {
     const vline = '1px solid rgba(255,255,255,0.5)';
-    const hdr = (t, i) => `<div style="font-size:0.54rem;font-weight:700;color:var(--text);opacity:0.6;text-align:center;border-left:${i===0?'none':vline};padding:0 1px;min-width:0;overflow:hidden;">${t}</div>`;
-    const cell = (t, i) => `<div style="font-size:0.55rem;color:var(--text);text-align:center;white-space:nowrap;border-left:${i===0?'none':vline};padding:0 1px;min-width:0;overflow:hidden;">${t}</div>`;
+    const hdr = (t, i) => `<div style="font-size:0.7rem;font-weight:700;color:var(--text);opacity:0.6;text-align:center;border-left:${i===0?'none':vline};padding:0 1px;min-width:0;overflow:hidden;">${t}</div>`;
+    const cell = (t, i) => `<div style="font-size:0.7rem;color:var(--text);text-align:center;white-space:nowrap;border-left:${i===0?'none':vline};padding:0 1px;min-width:0;overflow:hidden;">${t}</div>`;
     const fv = (n) => Number.isInteger(n) ? String(n) : n.toFixed(1);
      const hdrs = ['°C','%RH','kPa',refCo2?'µmol*':'µmol','In EC','Out EC','pH'];
     let html = `<div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;padding:4px 0 8px;border-bottom:1px solid rgba(255,255,255,0.2);">
