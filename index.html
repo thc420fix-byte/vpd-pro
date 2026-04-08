@@ -1181,6 +1181,7 @@
   function tgtHum(t, vpd) { return Math.round((1 - vpd / svp(t)) * 100); }
 
   /* === テント切替 === */
+  const _tentLastTap = {};  // buildTentBar再作成でもリセットされないよう外部管理
   function buildTentBar() {
     const bar = document.getElementById('tentBar');
     bar.innerHTML = '';
@@ -1189,12 +1190,15 @@
       btn.className = 'tent-btn' + (i === currentTent ? ' active' : '');
       btn.textContent = t.name;
       if (i > 0) btn.style.borderLeft = '1px solid var(--border)';
-      btn._lastTap = 0;
       btn.onclick = () => {
         if (i !== currentTent) { selectTent(i); return; }
         const now = Date.now();
-        if (now - btn._lastTap < 350) { renameTent(i); btn._lastTap = 0; }
-        else { btn._lastTap = now; }
+        if (_tentLastTap[i] && now - _tentLastTap[i] < 350) {
+          _tentLastTap[i] = 0;
+          renameTent(i);
+        } else {
+          _tentLastTap[i] = now;
+        }
       };
       bar.appendChild(btn);
     });
