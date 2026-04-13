@@ -14,7 +14,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
   <!-- Icons for Apple devices -->
-  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 
   <!-- Load Japanese web font. Embedding Noto Sans JP helps correct glyphs like “開” that may display incorrectly in some environments. -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
@@ -643,15 +643,15 @@
   <div id="offlineBanner" style="display:none; background:rgba(255,51,51,0.12); border:1px solid var(--danger); color:var(--danger); text-align:center; font-size:0.75rem; font-weight:700; padding:6px; margin-bottom:8px; border-radius:8px;" data-i18n="offline.banner">オフライン中 — データはローカルに保存されます</div>
   <div class="tent-bar" id="tentBar"></div>
   <div class="tabs">
-    <div class="tab active" data-tab="monitor">📊 Monitor</div>
-    <div class="tab" data-tab="log">💧 Feeding</div>
-    <div class="tab" data-tab="analysis">📈 Analysis</div>
-    <div class="tab" data-tab="table">📋 Reference</div>
+    <div class="tab active" data-tab="monitor" data-i18n="tab.monitor">📊 Monitor</div>
+    <div class="tab" data-tab="log" data-i18n="tab.log">💧 Feeding</div>
+    <div class="tab" data-tab="analysis" data-i18n="tab.analysis">📈 Analysis</div>
+    <div class="tab" data-tab="table" data-i18n="tab.table">📋 Reference</div>
   </div>
   <div class="tab-content active" id="tab-monitor">
     <div class="card">
       <div class="card-title" style="display:flex;align-items:center;">
-        <span style="flex:1;font-size:1.1rem;font-weight:500;color:var(--text);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Monitor</span>
+        <span style="flex:1;font-size:0.95rem;font-weight:700;color:var(--text);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ENVIRONMENT LOG</span>
         <div style="flex-shrink:0;display:flex;border:1px solid rgba(0,255,136,0.35);border-radius:20px;overflow:hidden;">
           <div id="modeTheory" class="mode-pill active-pill" onclick="setSpotMode('theory')">Theory</div>
           <div id="modeMySpot" class="mode-pill" onclick="setSpotMode('myspot')">📌 My Spot</div>
@@ -803,7 +803,7 @@
       <div id="waterTempNote" style="margin-top:8px;font-size:0.68rem;color:var(--accent);opacity:0.85;" data-i18n="ref.water_temp">💧 水温目安: 18〜22°C（根の健康・溶存酸素量の観点から）</div>
     </div>
     <div class="card">
-      <div class="card-title">VPD Reference Chart</div>
+      <div class="card-title">VPD REFERENCE CHART</div>
       <div id="vpdMatrix"></div>
     </div>
     <div id="ecReferenceChart" style="display:none;"></div>
@@ -813,7 +813,7 @@
   <div class="card">
     <!-- Header: Feeding Log + Theory / My Spot -->
     <div class="card-title" style="display:flex;align-items:center;">
-      <span style="flex:1;font-size:1.1rem;font-weight:500;color:var(--text);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Feeding Log</span>
+      <span style="flex:1;font-size:0.95rem;font-weight:700;color:var(--text);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">NUTRIENT LOG</span>
       <div style="flex-shrink:0;display:flex;border:1px solid rgba(0,255,136,0.35);border-radius:20px;overflow:hidden;">
         <div id="feedModeTheory" class="mode-pill active-pill" onclick="setSpotMode('theory')">Theory</div>
         <div id="feedModeMySpot" class="mode-pill" onclick="setSpotMode('myspot')">📌 My Spot</div>
@@ -831,8 +831,8 @@
     <!-- Fertilizer管理 -->
     <div style="border-top:1px solid rgba(0,255,136,0.12);padding-top:8px;margin:6px 0 4px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-size:0.95rem;color:#ffffff;font-weight:700;letter-spacing:0.03em;">🌿 Fertilizer</span>
-        <button onclick="addFertilizer()" style="width:22px;height:22px;border-radius:50%;background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);color:var(--accent);font-size:1rem;line-height:0;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
+        <span style="font-size:0.95rem;color:#ffffff;font-weight:700;letter-spacing:0.03em;">💧 NUTRIENT</span>
+        <button onclick="addFertilizer()" style="width:22px;height:22px;border-radius:50%;background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);color:var(--accent);font-size:1rem;line-height:1;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
       </div>
       <!-- タブバー -->
       <div id="fertTabBar" class="toggle-row" style="margin-bottom:6px;"></div>
@@ -878,14 +878,6 @@
         onmousedown="startSaveHold('feeding',this)" onmouseup="cancelSaveHold(this)" onmouseleave="cancelSaveHold(this)"
         ontouchstart="startSaveHold('feeding',this);event.preventDefault();" ontouchend="cancelSaveHold(this)" ontouchcancel="cancelSaveHold(this)"
         style="width:100%;padding:8px;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.4);border-radius:10px;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:0.06em;">Save</button>
-    </div>
-    <!-- Push Reminder Row -->
-    <div id="reminderRow" style="padding:2px 8px 4px;">
-      <div id="reminderActiveBox" style="display:none;background:rgba(0,180,255,0.07);border:1px solid rgba(0,180,255,0.3);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <span style="font-size:0.75rem;color:rgba(150,220,255,0.9);flex:1;">🔔 <span id="reminderTimeLabel">—</span></span>
-        <button onclick="cancelReminder()" style="background:transparent;border:1px solid rgba(255,100,100,0.5);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.68rem;padding:2px 8px;cursor:pointer;">取消</button>
-      </div>
-      <button id="reminderSetBtn" onclick="openReminderModal()" style="width:100%;padding:6px;background:rgba(0,180,255,0.07);border:1px solid rgba(0,180,255,0.25);border-radius:8px;color:rgba(150,220,255,0.85);font-size:0.8rem;cursor:pointer;letter-spacing:0.02em;">🔔 次回給水リマインダーを設定</button>
     </div>
     <!-- Feeding Sweet Spot Bar -->
     <div id="feedingSpotBar" style="display:none;flex-direction:column;gap:2px;padding:4px 2px;border-top:1px solid rgba(0,255,136,0.15);margin-top:2px;">
@@ -943,24 +935,6 @@
   </div>
 </div>
 
-<!-- リマインダーモーダル -->
-<div id="reminderModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:var(--surface2);border:1px solid rgba(0,180,255,0.4);border-radius:14px;padding:24px;width:82%;max-width:320px;">
-    <div data-i18n="reminder.title" style="font-size:1rem;color:rgba(150,220,255,0.95);font-weight:700;margin-bottom:4px;text-align:center;">🔔 次回給水リマインダー</div>
-    <div data-i18n="reminder.subtitle" style="font-size:0.72rem;color:var(--text);opacity:0.6;text-align:center;margin-bottom:16px;">何時間後に通知を送りますか？</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-      <button onclick="setReminder(24)" data-i18n="reminder.24h" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">24時間後</button>
-      <button onclick="setReminder(48)" data-i18n="reminder.48h" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">48時間後</button>
-      <button onclick="setReminder(72)" data-i18n="reminder.72h" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">72時間後</button>
-      <div style="display:flex;align-items:center;gap:4px;background:rgba(0,180,255,0.05);border:1px solid rgba(0,180,255,0.25);border-radius:8px;padding:4px 8px;">
-        <input id="reminderCustomHours" type="number" min="0.1" max="999" step="0.5" data-i18n-placeholder="reminder.custom_placeholder" placeholder="時間" style="width:100%;background:transparent;border:none;outline:none;color:rgba(150,220,255,0.9);font-size:0.9rem;font-weight:600;text-align:center;font-family:inherit;">
-        <button onclick="setReminderCustom()" data-i18n="reminder.custom_btn" style="background:rgba(0,180,255,0.2);border:1px solid rgba(0,180,255,0.4);border-radius:6px;color:rgba(150,220,255,0.9);font-size:0.72rem;padding:3px 8px;cursor:pointer;white-space:nowrap;">設定</button>
-      </div>
-    </div>
-    <button onclick="closeReminderModal()" data-i18n="reminder.cancel" style="width:100%;padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--text);font-size:0.85rem;cursor:pointer;opacity:0.7;">キャンセル</button>
-  </div>
-</div>
-
 <!-- テント名変更モーダル -->
 <div id="renameModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:24px;width:80%;max-width:320px;">
@@ -1003,6 +977,7 @@
   let appLang = localStorage.getItem('appLang') || 'ja';
   const STRINGS = {
     ja: {
+      'tab.monitor':'📊 環境','tab.log':'💧 給水','tab.analysis':'📈 分析','tab.table':'📋 参考',
       'settings.tolTemp':'温度 ±°C','settings.tolHum':'湿度 ±%RH',
       'offline.banner':'オフライン中 — データはローカルに保存されます',
       'monitor.target_hum':'目標湿度:','monitor.ppfd_now':'現在PPFD:','monitor.ppfd_target':'/ 目標:',
@@ -1012,9 +987,9 @@
       'spot.in':'スポット内 ✓','spot.out':'スポット外','spot.in_range':'マイスポットの範囲内です',
       'spot.approach':' でマイスポットに近づきます','spot.unsaved':'このステージのスポット未保存',
       'spot.label':'📌 スポット: ','spot.temp_adj':'温度: ','spot.hum_adj':'湿度: ','spot.light_adj':'光量: ',
-      'ref.stage_guide':'ステージ目安','ref.soil':'土壌','ref.hydro':'ハイドロ/ココ',
+      'ref.stage_guide':'STAGE CHART','ref.soil':'土壌','ref.hydro':'ハイドロ/ココ',
       'ref.water_temp':'💧 水温目安: 18〜22°C（根の健康・溶存酸素量の観点から）',
-      'analysis.stage_progress':'ステージ進捗','analysis.fert_log':'肥料ログ',
+      'analysis.stage_progress':'STAGE PROGRESS','analysis.fert_log':'肥料ログ',
       'analysis.photo_timeline':'写真タイムライン','analysis.no_logs':'記録なし',
       'analysis.total_days':'合計: ','analysis.days':'日',
       'toast.last_tent':'最後のテントは削除できません','toast.input_error':'⚠ 入力値を確認してください',
@@ -1041,20 +1016,9 @@
       'ppfd.high':'⚠ PPFD 高 / ','ppfd.low':'PPFD 低 / ',
       'ppfd.raise':'光量を上げてください（目安 ','ppfd.lower':'光量を下げてください（目安 ','ppfd.diff':'（差 ',
       'log.auto_note':'[AUTO] 危険状態が10分継続: ',
-      'reminder.title':'🔔 次回給水リマインダー',
-      'reminder.subtitle':'何時間後に通知を送りますか？',
-      'reminder.24h':'24時間後','reminder.48h':'48時間後','reminder.72h':'72時間後',
-      'reminder.custom_placeholder':'時間','reminder.custom_btn':'設定',
-      'reminder.cancel':'キャンセル',
-      'reminder.toast_setting':'🔔 設定中...','reminder.toast_set':'🔔 {h}時間後にリマインダーを設定しました',
-      'reminder.toast_cancel':'🔕 リマインダーをキャンセルしました',
-      'reminder.toast_fail':'⚠ サーバーへの接続に失敗しました',
-      'reminder.denied_alert':'🔔 通知が拒否されています。\niOSの場合: ホーム追加済みのPWAでのみ通知が使えます。\nSafari設定 → VPD PRO → 通知 → 許可に変更してください。',
-      'reminder.notify_body':'{name} の給水時間です',
-      'reminder.notify_title':'💧 Water Time!',
-      'reminder.scheduled':'に通知予定',
     },
     en: {
+      'tab.monitor':'📊 Monitor','tab.log':'💧 Feeding','tab.analysis':'📈 Analysis','tab.table':'📋 Reference',
       'settings.tolTemp':'Temp ±°C','settings.tolHum':'Humidity ±%RH',
       'offline.banner':'Offline — Data is saved locally',
       'monitor.target_hum':'Target RH:','monitor.ppfd_now':'PPFD:','monitor.ppfd_target':'/ Target:',
@@ -1064,9 +1028,9 @@
       'spot.in':'In Spot ✓','spot.out':'Off Spot','spot.in_range':'Within your My Spot range',
       'spot.approach':' to reach My Spot','spot.unsaved':'No spot saved for this stage',
       'spot.label':'📌 Spot: ','spot.temp_adj':'Temp: ','spot.hum_adj':'RH: ','spot.light_adj':'Light: ',
-      'ref.stage_guide':'Stage Reference','ref.soil':'Soil','ref.hydro':'Hydro/Coco',
+      'ref.stage_guide':'STAGE CHART','ref.soil':'Soil','ref.hydro':'Hydro/Coco',
       'ref.water_temp':'💧 Water temp: 18–22°C (for root health & dissolved oxygen)',
-      'analysis.stage_progress':'Stage Progress','analysis.fert_log':'Fertilizer Log',
+      'analysis.stage_progress':'STAGE PROGRESS','analysis.fert_log':'Fertilizer Log',
       'analysis.photo_timeline':'Photo Timeline','analysis.no_logs':'No records',
       'analysis.total_days':'Total: ','analysis.days':' days',
       'toast.last_tent':'Cannot delete the last tent','toast.input_error':'⚠ Please check your input values',
@@ -1093,18 +1057,6 @@
       'ppfd.high':'⚠ PPFD High / ','ppfd.low':'PPFD Low / ',
       'ppfd.raise':'Increase light (est. ','ppfd.lower':'Decrease light (est. ','ppfd.diff':'(diff ',
       'log.auto_note':'[AUTO] Danger state continued 10 min: ',
-      'reminder.title':'🔔 Next Watering Reminder',
-      'reminder.subtitle':'How many hours from now?',
-      'reminder.24h':'In 24 hours','reminder.48h':'In 48 hours','reminder.72h':'In 72 hours',
-      'reminder.custom_placeholder':'hours','reminder.custom_btn':'Set',
-      'reminder.cancel':'Cancel',
-      'reminder.toast_setting':'🔔 Setting...','reminder.toast_set':'🔔 Reminder set for {h} hours from now',
-      'reminder.toast_cancel':'🔕 Reminder cancelled',
-      'reminder.toast_fail':'⚠ Failed to connect to server',
-      'reminder.denied_alert':'🔔 Notifications are blocked.\niOS: Push notifications only work in an installed PWA (Add to Home Screen).\nGo to Safari Settings → VPD PRO → Notifications → Allow.',
-      'reminder.notify_body':'{name} watering time',
-      'reminder.notify_title':'💧 Water Time!',
-      'reminder.scheduled':'notification scheduled',
     }
   };
   const tr = k => (STRINGS[appLang]?.[k]) ?? (STRINGS.ja[k] ?? k);
@@ -1324,7 +1276,7 @@
     const modal = document.getElementById('renameFertilizerModal');
     const input = document.getElementById('renameFertilizerInput');
     const t = tents[currentTent];
-    input.value = (t.fertilizerList[i].name || `Fertilizer${i + 1}`);
+    input.value = (t.fertilizerList[i].name || `NUTRIENT${i + 1}`);
     modal.style.display = 'flex';
     setTimeout(() => input.focus(), 50);
   }
@@ -1360,7 +1312,6 @@
     renderStageTimeline(logs);
     renderPhotoTimeline(logs);
     renderFertLog(logs);
-    if (typeof updateReminderUI === 'function') updateReminderUI();
   }
   async function saveCurrentTentState() {
     const t = tents[currentTent];
@@ -1907,7 +1858,7 @@
     }
     if (currentFertTab >= list.length) currentFertTab = list.length - 1;
     bar.innerHTML = list.map((f, i) => {
-      const label = f.name || `Fertilizer${i + 1}`;
+      const label = f.name || `NUTRIENT${i + 1}`;
       const active = i === currentFertTab;
       return `<div class="toggle-btn${active ? ' active-day' : ''}" data-index="${i}" onclick="selectFertTab(${i})" ondblclick="selectFertilizerTabAndEdit(${i})" style="white-space:nowrap;outline:none;">${label}</div>`;
     }).join('');
@@ -1961,7 +1912,8 @@
   async function addFertilizer() {
     const t = tents[currentTent];
     if (!t.fertilizerList) t.fertilizerList = [];
-    t.fertilizerList.push({ name: '', waterL: '', amountMl: '' });
+    const nextNum = t.fertilizerList.length + 1;
+    t.fertilizerList.push({ name: `NUTRIENT${nextNum}`, waterL: '', amountMl: '' });
     currentFertTab = t.fertilizerList.length - 1;
     await dbPut('tents', t);
     renderFertilizerTabs();
@@ -2441,11 +2393,12 @@
   }
   function buildStageTable() {
     const vline = '1px solid rgba(255,255,255,0.5)';
-    const hdr = (t, i) => `<div style="font-size:0.7rem;font-weight:700;color:var(--text);opacity:0.6;text-align:center;border-left:${i===0?'none':vline};padding:0 1px;min-width:0;overflow:hidden;">${t}</div>`;
-    const cell = (t, i) => `<div style="font-size:0.7rem;color:var(--text);text-align:center;white-space:nowrap;border-left:${i===0?'none':vline};padding:0 1px;min-width:0;overflow:hidden;">${t}</div>`;
+    const hdr = (t, i) => `<div style="font-size:0.7rem;font-weight:700;color:var(--text);opacity:0.6;text-align:center;border-left:${i===0?'none':vline};padding:0 2px;min-width:0;">${t}</div>`;
+    const cell = (t, i) => `<div style="font-size:0.7rem;color:var(--text);text-align:center;white-space:nowrap;border-left:${i===0?'none':vline};padding:0 2px;min-width:0;">${t}</div>`;
     const fv = (n) => Number.isInteger(n) ? String(n) : n.toFixed(1);
-     const hdrs = ['°C','%RH','kPa',refCo2?'µmol*':'µmol','In EC','Out EC','pH'];
-    let html = `<div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;padding:4px 0 8px;border-bottom:1px solid rgba(255,255,255,0.2);">
+    const hdrs = ['°C','%RH','kPa',refCo2?'µmol*':'µmol','In EC','Out EC','pH'];
+    let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><div style="min-width:430px;">`;
+    html += `<div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;padding:4px 0 8px;border-bottom:1px solid rgba(255,255,255,0.2);">
       <span></span>${hdrs.map((t,i) => hdr(t,i)).join('')}
     </div>`;
     Object.keys(stages).filter(k => k !== 'harvest').forEach((key, ri) => {
@@ -2461,7 +2414,7 @@
         isDry ? '—' : `${s.ecRunoff[0].toFixed(1)}〜${s.ecRunoff[1].toFixed(1)}`,
         phData[refMedium][key] ?? '—',
       ];
-      html += `<div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);${zebra}">
+      html += `<div style="display:grid;grid-template-columns:clamp(44px,14.5vw,56px) 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);${zebra}">
         <div style="display:flex;align-items:center;gap:3px;">
           <div style="width:3px;height:18px;background:${s.color};border-radius:2px;flex-shrink:0;"></div>
           <span style="font-size:0.65rem;font-weight:700;color:${s.color};">${s.name}</span>
@@ -2469,6 +2422,7 @@
         ${vals.map((v,i) => cell(v,i)).join('')}
       </div>`;
     });
+    html += `</div></div>`;
     document.getElementById('stageTable').innerHTML = html;
   }
   /* === VPD マトリクス === */
@@ -2603,10 +2557,6 @@
       log.ec ? `⚡ Input EC: ${log.ec} mS${log.runoffEc ? '　🔄 Runoff: ' + log.runoffEc + ' mS' : ''}` : '',
       fertNames ? `🌿 ${fertNames}` : ''
     ].filter(Boolean));
-    // アクティブなリマインダーがなければ自動でモーダル表示
-    const hasReminder = localStorage.getItem(reminderKey('scheduledAt'));
-    const stillActive = hasReminder && new Date(hasReminder) > new Date();
-    if (!stillActive) setTimeout(() => openReminderModal(), 1800);
   }
 
   function adjustRunoffEc(delta) {
@@ -3482,9 +3432,6 @@ function classifyVpd(vpd, lo, hi) {
     return Uint8Array.from(raw, c => c.charCodeAt(0));
   }
 
-  function reminderKey(suffix) {
-    return `reminder_${currentTent}_${suffix}`;
-  }
 
   async function getPushSubId() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
@@ -3510,93 +3457,6 @@ function classifyVpd(vpd, lo, hi) {
     } catch { return null; }
   }
 
-  async function setReminder(hours) {
-    closeReminderModal();
-    showToast(tr('reminder.toast_setting'));
-    const subId = await getPushSubId();
-    if (!subId) {
-      if (Notification.permission === 'denied') {
-        alert(tr('reminder.denied_alert'));
-      } else {
-        showToast('⚠ 通知の設定に失敗しました');
-      }
-      return;
-    }
-    const tentName = tents[currentTent]?.name || 'Tent';
-    const scheduledAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
-    try {
-      const resp = await fetch(`${PUSH_SERVER}/schedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subscriptionId: subId,
-          title: tr('reminder.notify_title'),
-          body: tr('reminder.notify_body').replace('{name}', tentName),
-          scheduledAt
-        })
-      });
-      const data = await resp.json();
-      localStorage.setItem(reminderKey('scheduleId'), data.id);
-      localStorage.setItem(reminderKey('scheduledAt'), scheduledAt);
-      const hLabel = hours < 1 ? `${Math.round(hours * 60)}${appLang === 'ja' ? '分' : 'min'}` : `${hours}${appLang === 'ja' ? '時間' : 'h'}`;
-      showToast(tr('reminder.toast_set').replace('{h}', hLabel));
-    } catch { showToast(tr('reminder.toast_fail')); }
-    updateReminderUI();
-  }
-
-  async function setReminderCustom() {
-    const h = parseFloat(document.getElementById('reminderCustomHours').value);
-    if (!h || h < 0.1) return;
-    await setReminder(h);
-  }
-
-  async function cancelReminder() {
-    const scheduleId = localStorage.getItem(reminderKey('scheduleId'));
-    if (scheduleId) {
-      try { await fetch(`${PUSH_SERVER}/schedule/${scheduleId}`, { method: 'DELETE' }); } catch {}
-      localStorage.removeItem(reminderKey('scheduleId'));
-      localStorage.removeItem(reminderKey('scheduledAt'));
-    }
-    showToast(tr('reminder.toast_cancel'));
-    updateReminderUI();
-  }
-
-  function updateReminderUI() {
-    const activeBox = document.getElementById('reminderActiveBox');
-    const setBtn    = document.getElementById('reminderSetBtn');
-    const label     = document.getElementById('reminderTimeLabel');
-    if (!activeBox || !setBtn) return;
-    const scheduledAt = localStorage.getItem(reminderKey('scheduledAt'));
-    if (scheduledAt && new Date(scheduledAt) > new Date()) {
-      const d = new Date(scheduledAt);
-      label.textContent = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${tr('reminder.scheduled')}`;
-      activeBox.style.display = 'flex';
-      setBtn.style.display = 'none';
-    } else {
-      if (scheduledAt) { // expired
-        localStorage.removeItem(reminderKey('scheduleId'));
-        localStorage.removeItem(reminderKey('scheduledAt'));
-      }
-      activeBox.style.display = 'none';
-      setBtn.style.display = 'block';
-    }
-  }
-
-  function openReminderModal() {
-    const m = document.getElementById('reminderModal');
-    m.style.display = 'flex';
-    document.getElementById('reminderCustomHours').value = '';
-  }
-
-  function closeReminderModal() {
-    document.getElementById('reminderModal').style.display = 'none';
-  }
-
-  // Update reminder UI whenever tent changes
-  const _origSwitchTent = window.switchTent;
-  document.addEventListener('DOMContentLoaded', () => {
-    updateReminderUI();
-  });
   </script>
 
   <script>
