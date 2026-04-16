@@ -2984,7 +2984,10 @@ function classifyVpd(vpd, lo, hi) {
     document.addEventListener('touchend', (e) => {
       const now = Date.now();
       if (now - lastTouchEnd <= 350) {
-        e.preventDefault();
+        // tent-btn は独自ダブルタップで名前変更するため除外
+        if (!e.target.closest('.tent-btn')) {
+          e.preventDefault();
+        }
       }
       lastTouchEnd = now;
     }, { passive: false });
