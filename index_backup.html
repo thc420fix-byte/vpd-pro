@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>VPD PRO — Grow Environment Monitor</title>
   <!-- PWA manifest -->
   <link rel="manifest" href="./manifest.json">
@@ -14,13 +14,13 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
   <!-- Icons for Apple devices -->
-  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 
-  <!-- Load Japanese web font. Embedding Noto Sans JP helps correct glyphs like “開” that may display incorrectly in some environments. -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
-
-  <!-- Chart.js for graph rendering -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <!-- Load Japanese web font (non-blocking for offline PWA) -->
+  <link rel=”preconnect” href=”https://fonts.googleapis.com” crossorigin>
+  <link rel=”preconnect” href=”https://fonts.gstatic.com” crossorigin>
+  <link href=”https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Rajdhani:wght@700&display=swap” rel=”stylesheet” media=”print” onload=”this.media='all'”>
+  <noscript><link href=”https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Rajdhani:wght@700&display=swap” rel=”stylesheet”></noscript>
 
   <style>
     /* 基本テーマ（ダーク） */
@@ -87,13 +87,18 @@
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
       background: var(--bg);
       color: var(--text);
       padding: 8px;
       padding-top: max(10px, env(safe-area-inset-top));
       padding-bottom: max(10px, env(safe-area-inset-bottom));
+      /* iOS ダブルタップズーム / ピンチズーム抑止（アプリ的UIで固定） */
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-text-size-adjust: 100%;
     }
+    html { touch-action: manipulation; }
     h1 {
       font-size: 1.9rem;
       font-weight: 800;
@@ -108,6 +113,7 @@
       color: var(--text);
       margin-bottom: 6px;
       opacity: 0.75;
+      letter-spacing: 0.2px;
     }
     /* テントバー */
     .tent-bar {
@@ -115,10 +121,15 @@
       margin-bottom: 8px;
       border: 1px solid var(--border);
       border-radius: 10px;
-      overflow: hidden;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
     }
+    .tent-bar::-webkit-scrollbar { display: none; } /* Chrome/Safari */
     .tent-btn {
-      flex: 1;
+      flex: 1 0 auto;
+      min-width: 56px;
+      max-width: 90px;
       padding: 10px 6px;
       background: var(--surface);
       border: none;
@@ -128,7 +139,11 @@
       text-align: center;
       cursor: pointer;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+    .tent-btn:first-child { border-radius: 10px 0 0 10px; }
+    .tent-btn:last-child  { border-radius: 0 10px 10px 0; }
     .tent-btn.active {
       background: var(--accent);
       color: #000;
@@ -172,6 +187,7 @@
       color:var(--text);
       font-weight: 700;
       margin-bottom: 8px;
+      letter-spacing: 0.3px;
     }
     /* ステージボタン */
     .stage-row {
@@ -213,18 +229,6 @@
       color: var(--accent);
       outline: none;
       border-radius: 2px;
-    }
-    .input-row input[type="text"],
-    .input-row input[type="number"] {
-      flex: 1;
-      font-size: 1.4rem;
-      font-weight: 700;
-      background: transparent;
-      color: var(--accent);
-      border: none;
-      border-bottom: 1px dashed rgba(0,255,136,0.4);
-      text-align: center;
-      outline: none;
     }
     #phInput::placeholder,
     #ecInput::placeholder,
@@ -279,7 +283,7 @@
       color: var(--text);
     }
     .vpd-num {
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Rajdhani', -apple-system, sans-serif;
       font-size: 1.8rem;
       font-weight: 700;
     }
@@ -290,16 +294,8 @@
       font-size: 0.8rem;
       font-weight: 700;
       margin-bottom: 6px;
-    }
-    .status-low {
-      background: rgba(0, 204, 255, 0.15);
-      color: var(--accent2);
-      border: 1px solid var(--accent2);
-    }
-    .status-high {
-      background: rgba(255, 51, 51, 0.15);
-      color: var(--danger);
-      border: 1px solid var(--danger);
+      text-transform: none;
+      letter-spacing: 0.2px;
     }
     .status-ok {
       background: rgba(0, 255, 136, 0.15);
@@ -324,14 +320,6 @@
       cursor: pointer;
       text-align: center;
     }
-    .view-mode-btn {
-      transition: all 0.2s ease;
-    }
-    .view-mode-btn.active {
-      background: rgba(0, 255, 136, 0.15);
-      border-color: rgba(0, 255, 136, 0.4);
-      color: var(--accent);
-    }
     .toggle-btn.active-day {
       border-color: var(--accent);
       color: var(--accent);
@@ -352,49 +340,6 @@
       color: var(--accent2);
       background: rgba(0,204,255,0.1);
     }
-    /* 日付・ウィーク表示 */
-    .date-info {
-      font-size: 0.8rem;
-      color:var(--text);
-      margin-bottom: 4px;
-    }
-    /* ログ */
-    .log-list {
-      max-height: 350px;
-      overflow-y: auto;
-    }
-    .log-item {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px;
-      margin-bottom: 6px;
-      position: relative;
-    }
-    .log-item-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.7rem;
-      margin-bottom: 4px;
-    }
-    .log-del {
-      position: absolute;
-      top: 4px;
-      right: 8px;
-      background: none;
-      border: none;
-      color:var(--text);
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    .log-photo {
-      width: 100%;
-      max-height: 200px;
-      object-fit: cover;
-      border-radius: 6px;
-      margin-top: 6px;
-    }
-
     /* 写真比較オーバーレイ */
     .photo-overlay {
       position: fixed;
@@ -461,95 +406,13 @@
       text-align:center; box-shadow:0 0 30px rgba(0,255,136,0.2);
     }
   
-/* === Compact mode (Leaf + CO2 同時ON時) === */
-.monitor-compact .adj-row { padding: 2px 0 !important; }
-.monitor-compact .adj-val { font-size: 1.2rem !important; width: 44px !important; }
-.monitor-compact .adj-label { font-size: 0.9rem !important; }
-.monitor-compact .adj-unit { font-size: 0.9rem !important; }
-.monitor-compact .small-btn.adj-btn { width: 28px !important; height: 28px !important; font-size: 1rem !important; }
-
 /* === Pro enhancements === */
 *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
-.analysis-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; margin-top:8px; }
-.analysis-stat { background: var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px; }
-.analysis-stat .k { font-size:0.7rem; color:var(--text); margin-bottom:4px; }
-.analysis-stat .v { font-size:1.15rem; font-weight:700; color:var(--text); }
-.analysis-note { font-size:0.8rem; color:var(--text); line-height:1.5; white-space:pre-wrap; }
-.env-tab-btn,.feed-tab-btn{background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:0.72rem;padding:3px 12px;cursor:pointer;opacity:0.7;}
-.env-tab-btn.active,.feed-tab-btn.active{background:rgba(0,255,136,0.15);border-color:var(--accent);color:var(--accent);opacity:1;}
-.compare-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
-.compare-row:last-child { border-bottom:none; }
-.compare-name { font-size:0.8rem; font-weight:700; }
-.compare-meta { font-size:0.72rem; color:var(--text); }
 .status-danger { color:#fff; background:linear-gradient(90deg,#ff1f3d,#ff0033); border:1px solid #ff0033; box-shadow:0 0 6px rgba(255,0,50,.8),0 0 12px rgba(255,0,50,.6),0 0 20px rgba(255,0,50,.4); transform:scale(1.03); }
 .status-warning { color:#ff9500; background:rgba(255,149,0,.15); border:1px solid #ff9500; }
 @keyframes dangerPulse { 0%{opacity:1; transform:scale(1.03);} 50%{opacity:.6; transform:scale(1.06);} 100%{opacity:1; transform:scale(1.03);} }
-.pulse { animation: dangerPulse .9s infinite; }
+.pulse { animation: dangerPulse 1.2s ease-in-out infinite; }
 .ppfd-alert { display:block;width:100%;box-sizing:border-box;padding:5px 8px;border-radius:8px;color:#fff;font-weight:700;font-size:0.72rem;text-align:center;background:rgba(255,30,0,0.85);box-shadow:0 0 8px rgba(255,0,0,.7),0 0 16px rgba(255,0,0,.4); }
-@media (max-width: 600px) { .analysis-grid { grid-template-columns: 1fr 1fr; } }
-
-.analysis-note strong { color: var(--accent); }
-.rank-chip {
-  display:inline-block;
-  min-width: 26px;
-  text-align:center;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  font-size: 0.72rem;
-  font-weight: 700;
-  margin-right: 8px;
-}
-.compare-right {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-
-.analysis-priority-card {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(57,214,122,0.08), 0 10px 24px rgba(0,0,0,0.18);
-}
-.analysis-action-primary {
-  font-size: 1.02rem;
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-.analysis-stat {
-  padding: 12px;
-}
-.analysis-trend {
-  font-size: 0.75rem;
-  color:var(--text);
-}
-.analysis-cause {
-  font-size: 0.85rem;
-  color: var(--text);
-}
-.analysis-action {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--accent);
-}
-.compare-name {
-  font-size: 0.9rem;
-  font-weight: 800;
-}
-.rank-chip {
-  background: #39d67a;
-  color: #000;
-  border-color: #39d67a;
-}
-
-.subtitle { letter-spacing: 0.2px; }
-.card-title { letter-spacing: 0.3px; }
-.status-badge { text-transform: none; letter-spacing: 0.2px; }
-.compare-meta { line-height: 1.45; }
 .tabs .tab, .stage-btn, .small-btn { font-weight: 700; }
 
 .mode-pill { padding:3px 9px; font-size:0.6rem; cursor:pointer; color:rgba(255,255,255,0.45); user-select:none; }
@@ -558,36 +421,13 @@
 .spot-delta.on  { color:var(--accent); }
 .spot-delta.off { color:#ff8866; }
 
-.sweetspot-item {
-  border: 1px solid var(--border);
-  background: var(--surface2);
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 8px;
-}
-.sweetspot-top {
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  align-items:center;
-  margin-bottom:6px;
-}
-.sweetspot-title {
-  font-size:0.82rem;
-  font-weight:700;
-}
-.sweetspot-meta {
-  font-size:0.72rem;
-  color:var(--text);
-  line-height:1.45;
-}
 
 </style>
 </head>
 <body>
-  <button id="settingsToggle" onclick="openSettings()">⚙️</button>
+  <button id="settingsToggle" onclick="openSettings()" aria-label="Settings">⚙️</button>
   <!-- Settings Modal -->
-  <div id="settingsModal" onclick="closeSettings(event)">
+  <div id="settingsModal" role="dialog" aria-modal="true" onclick="closeSettings(event)">
     <div id="settingsPanel">
       <div style="font-size:0.7rem;font-weight:700;color:var(--accent);opacity:0.8;letter-spacing:0.1em;margin-bottom:14px;">SETTINGS</div>
       <!-- テーマ -->
@@ -643,15 +483,15 @@
   <div id="offlineBanner" style="display:none; background:rgba(255,51,51,0.12); border:1px solid var(--danger); color:var(--danger); text-align:center; font-size:0.75rem; font-weight:700; padding:6px; margin-bottom:8px; border-radius:8px;" data-i18n="offline.banner">オフライン中 — データはローカルに保存されます</div>
   <div class="tent-bar" id="tentBar"></div>
   <div class="tabs">
-    <div class="tab active" data-tab="monitor">📊 Monitor</div>
-    <div class="tab" data-tab="log">💧 Feeding</div>
-    <div class="tab" data-tab="analysis">📈 Analysis</div>
-    <div class="tab" data-tab="table">📋 Reference</div>
+    <div class="tab active" data-tab="monitor" data-i18n="tab.monitor">📊 Monitor</div>
+    <div class="tab" data-tab="log" data-i18n="tab.log">💧 Feeding</div>
+    <div class="tab" data-tab="analysis" data-i18n="tab.analysis">📈 Analysis</div>
+    <div class="tab" data-tab="table" data-i18n="tab.table">📋 Reference</div>
   </div>
   <div class="tab-content active" id="tab-monitor">
     <div class="card">
       <div class="card-title" style="display:flex;align-items:center;">
-        <span style="flex:1;font-size:1.1rem;font-weight:500;color:var(--text);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Monitor</span>
+        <span style="flex:1;font-size:0.95rem;font-weight:700;color:var(--text);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ENVIRONMENT LOG</span>
         <div style="flex-shrink:0;display:flex;border:1px solid rgba(0,255,136,0.35);border-radius:20px;overflow:hidden;">
           <div id="modeTheory" class="mode-pill active-pill" onclick="setSpotMode('theory')">Theory</div>
           <div id="modeMySpot" class="mode-pill" onclick="setSpotMode('myspot')">📌 My Spot</div>
@@ -682,10 +522,10 @@
         <button id="clearDateBtn" oncontextmenu="return false;" style="background:transparent;border:1px solid rgba(255,100,100,0.6);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.85rem;width:28px;height:28px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🗑</button>
       </div>
       <div class="toggle-row">
-        <div class="toggle-btn active-day" id="btnDay" onclick="setDayNight('day')">💡 Light ON</div>
-        <div class="toggle-btn" id="btnNight" onclick="setDayNight('night')">🌑 Light OFF</div>
-        <div class="toggle-btn" id="btnLeaf" onclick="toggleLeaf()">🌿 Leaf VPD</div>
-        <div class="toggle-btn" id="btnCO2" onclick="toggleCO2()">💨 CO₂</div>
+        <div class="toggle-btn active-day" id="btnDay" role="button" aria-pressed="true" onclick="setDayNight('day')">💡 Light ON</div>
+        <div class="toggle-btn" id="btnNight" role="button" aria-pressed="false" onclick="setDayNight('night')">🌑 Light OFF</div>
+        <div class="toggle-btn" id="btnLeaf" role="button" aria-pressed="false" onclick="toggleLeaf()">🌿 Leaf VPD</div>
+        <div class="toggle-btn" id="btnCO2" role="button" aria-pressed="false" onclick="toggleCO2()">💨 CO₂</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;margin:6px 0;width:100%;">
         <!-- Temp -->
@@ -720,6 +560,9 @@
         </div>
         <!-- Theory reference (Theory mode only) -->
         <div id="monitorTheoryRef" style="display:none;border-top:1px solid rgba(255,255,255,0.06);padding:5px 0;font-size:0.68rem;color:var(--text);opacity:0.8;text-align:center;line-height:1.7;"></div>
+        <div style="padding:4px 8px 0;">
+          <input id="monitorNoteInput" type="text" placeholder="📝 メモ（任意）" maxlength="100" style="width:100%;box-sizing:border-box;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--text);font-size:0.78rem;outline:none;margin-bottom:4px;">
+        </div>
         <div style="padding:4px 8px 2px;">
           <button id="monitorSaveBtn" class="save-btn"
             onmousedown="startSaveHold('monitor',this)" onmouseup="cancelSaveHold(this)" onmouseleave="cancelSaveHold(this)"
@@ -803,17 +646,16 @@
       <div id="waterTempNote" style="margin-top:8px;font-size:0.68rem;color:var(--accent);opacity:0.85;" data-i18n="ref.water_temp">💧 水温目安: 18〜22°C（根の健康・溶存酸素量の観点から）</div>
     </div>
     <div class="card">
-      <div class="card-title">VPD Reference Chart</div>
+      <div class="card-title">VPD REFERENCE CHART</div>
       <div id="vpdMatrix"></div>
     </div>
-    <div id="ecReferenceChart" style="display:none;"></div>
   </div>
   
 <div class="tab-content" id="tab-log">
   <div class="card">
     <!-- Header: Feeding Log + Theory / My Spot -->
     <div class="card-title" style="display:flex;align-items:center;">
-      <span style="flex:1;font-size:1.1rem;font-weight:500;color:var(--text);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Feeding Log</span>
+      <span style="flex:1;font-size:0.95rem;font-weight:700;color:var(--text);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">NUTRIENT LOG</span>
       <div style="flex-shrink:0;display:flex;border:1px solid rgba(0,255,136,0.35);border-radius:20px;overflow:hidden;">
         <div id="feedModeTheory" class="mode-pill active-pill" onclick="setSpotMode('theory')">Theory</div>
         <div id="feedModeMySpot" class="mode-pill" onclick="setSpotMode('myspot')">📌 My Spot</div>
@@ -831,8 +673,8 @@
     <!-- Fertilizer管理 -->
     <div style="border-top:1px solid rgba(0,255,136,0.12);padding-top:8px;margin:6px 0 4px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-size:0.95rem;color:#ffffff;font-weight:700;letter-spacing:0.03em;">🌿 Fertilizer</span>
-        <button onclick="addFertilizer()" style="width:22px;height:22px;border-radius:50%;background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);color:var(--accent);font-size:1rem;line-height:0;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
+        <span style="font-size:0.95rem;color:#ffffff;font-weight:700;letter-spacing:0.03em;">💧 NUTRIENT</span>
+        <button onclick="addFertilizer()" style="width:22px;height:22px;border-radius:50%;background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);color:var(--accent);font-size:1rem;line-height:1;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
       </div>
       <!-- タブバー -->
       <div id="fertTabBar" class="toggle-row" style="margin-bottom:6px;"></div>
@@ -844,9 +686,9 @@
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <button class="small-btn" onclick="adjustPh(-0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
         <div style="display:flex;align-items:baseline;gap:5px;width:210px;justify-content:center;">
-          <span style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:90px;text-align:right;">pH</span>
+          <span style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:80px;text-align:right;">pH</span>
           <input id="phInput" type="text" inputmode="decimal" placeholder="6.0" onfocus="this.select()" style="width:52px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
-          <span style="font-size:1.1rem;color:var(--text);min-width:40px;"></span>
+          <span style="font-size:1.1rem;color:var(--text);min-width:45px;"></span>
         </div>
         <button class="small-btn" onclick="adjustPh(0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">+</button>
       </div>
@@ -854,9 +696,9 @@
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <button class="small-btn" onclick="adjustEc(-0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
         <div style="display:flex;align-items:baseline;gap:5px;width:210px;justify-content:center;">
-          <span id="inputEcLabel" style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:90px;text-align:right;">Input EC</span>
+          <span id="inputEcLabel" style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:80px;text-align:right;">Input EC</span>
           <input id="ecInput" type="text" inputmode="decimal" placeholder="1.5" onfocus="this.select()" style="width:52px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
-          <span style="font-size:1.1rem;color:var(--text);min-width:40px;">mS</span>
+          <span style="font-size:1.1rem;color:var(--text);min-width:45px;">mS</span>
         </div>
         <button class="small-btn" onclick="adjustEc(0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">+</button>
       </div>
@@ -864,28 +706,23 @@
       <div id="runoffEcRow" style="display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 0;">
         <button class="small-btn" onclick="adjustRunoffEc(-0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
         <div style="display:flex;align-items:baseline;gap:5px;width:210px;justify-content:center;">
-          <span style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:90px;text-align:right;">Runoff EC</span>
+          <span style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:80px;text-align:right;">Runoff EC</span>
           <input id="runoffEcInput" type="text" inputmode="decimal" placeholder="1.8" onfocus="this.select()" style="width:52px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
-          <span style="font-size:1.1rem;color:var(--text);min-width:40px;">mS</span>
+          <span style="font-size:1.1rem;color:var(--text);min-width:45px;">mS</span>
         </div>
         <button class="small-btn" onclick="adjustRunoffEc(0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">+</button>
       </div>
     </div>
     <!-- EC Theory reference (Theory mode only) -->
-    <div id="feedingRef" style="font-size:0.68rem;color:var(--text);text-align:center;opacity:0.8;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);padding:8px 0;line-height:1.7;margin:4px 0;"></div>
+    <div id="feedingRef" style="font-size:0.68rem;color:var(--text);text-align:center;opacity:0.8;border-top:1px solid rgba(255,255,255,0.06);padding:5px 0;line-height:1.7;"></div>
+    <div style="padding:4px 8px 0;">
+      <input id="feedingNoteInput" type="text" placeholder="📝 メモ（任意）" maxlength="100" style="width:100%;box-sizing:border-box;padding:6px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--text);font-size:0.78rem;outline:none;margin-bottom:4px;">
+    </div>
     <div style="padding:4px 8px 2px;">
       <button id="feedingSaveBtn" class="save-btn"
         onmousedown="startSaveHold('feeding',this)" onmouseup="cancelSaveHold(this)" onmouseleave="cancelSaveHold(this)"
         ontouchstart="startSaveHold('feeding',this);event.preventDefault();" ontouchend="cancelSaveHold(this)" ontouchcancel="cancelSaveHold(this)"
         style="width:100%;padding:8px;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.4);border-radius:10px;color:var(--accent);font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:0.06em;">Save</button>
-    </div>
-    <!-- Push Reminder Row -->
-    <div id="reminderRow" style="padding:2px 8px 4px;">
-      <div id="reminderActiveBox" style="display:none;background:rgba(0,180,255,0.07);border:1px solid rgba(0,180,255,0.3);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <span style="font-size:0.75rem;color:rgba(150,220,255,0.9);flex:1;">🔔 <span id="reminderTimeLabel">—</span></span>
-        <button onclick="cancelReminder()" style="background:transparent;border:1px solid rgba(255,100,100,0.5);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.68rem;padding:2px 8px;cursor:pointer;">取消</button>
-      </div>
-      <button id="reminderSetBtn" onclick="openReminderModal()" style="width:100%;padding:6px;background:rgba(0,180,255,0.07);border:1px solid rgba(0,180,255,0.25);border-radius:8px;color:rgba(150,220,255,0.85);font-size:0.8rem;cursor:pointer;letter-spacing:0.02em;">🔔 次回給水リマインダーを設定</button>
     </div>
     <!-- Feeding Sweet Spot Bar -->
     <div id="feedingSpotBar" style="display:none;flex-direction:column;gap:2px;padding:4px 2px;border-top:1px solid rgba(0,255,136,0.15);margin-top:2px;">
@@ -904,30 +741,18 @@
 <div class="tab-content" id="tab-analysis">
   <!-- ステージ進捗タイムライン -->
   <div class="card">
-    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="(function(){var el=document.getElementById('stageTimeline');var ic=document.getElementById('stageToggleIcon');var open=el.style.display!=='none';el.style.display=open?'none':'';ic.textContent=open?'▶':'▼';})()">
-      <span data-i18n="analysis.stage_progress">ステージ進捗</span>
+    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:0;padding:4px 0;" onclick="(function(){var el=document.getElementById('stageTimeline');var ic=document.getElementById('stageToggleIcon');var open=el.style.display!=='none';el.style.display=open?'none':'';ic.textContent=open?'▶':'▼';})()">
+      <span data-i18n="analysis.stage_progress" style="text-align:left;">ステージ進捗</span>
       <span style="display:flex;align-items:center;gap:8px;">
+        <span style="display:flex;gap:6px;" onclick="event.stopPropagation()">
+          <button onclick="triggerPhoto('camera','gallery')" style="background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);border-radius:6px;color:var(--accent);font-size:0.75rem;padding:4px 8px;cursor:pointer;">📷</button>
+          <button onclick="triggerPhoto('library','gallery')" style="background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);border-radius:6px;color:var(--accent);font-size:0.75rem;padding:4px 8px;cursor:pointer;">🖼</button>
+        </span>
         <span id="stageTotalDays" style="font-size:0.8rem;color:var(--accent);font-weight:700;"></span>
         <span id="stageToggleIcon" style="font-size:0.7rem;color:var(--text);opacity:0.5;">▼</span>
       </span>
     </div>
     <div id="stageTimeline"></div>
-  </div>
-  <!-- 肥料ログ -->
-  <div class="card" style="display:none;">
-    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="(function(){var el=document.getElementById('fertLogBody');var ic=document.getElementById('fertLogToggleIcon');var open=el.style.display!=='none';el.style.display=open?'none':'';ic.textContent=open?'▶':'▼';})()">
-      <span data-i18n="analysis.fert_log">肥料ログ</span>
-      <span id="fertLogToggleIcon" style="font-size:0.7rem;color:var(--text);opacity:0.5;">▼</span>
-    </div>
-    <div id="fertLogBody">
-      <div id="fertLogEmpty" data-i18n="fert_log.empty" style="text-align:center;font-size:0.8rem;color:var(--text);opacity:0.5;padding:20px;">Feeding ログを記録するとここに表示されます</div>
-      <div id="fertLogList" style="display:flex;flex-direction:column;gap:8px;"></div>
-    </div>
-  </div>
-  <!-- 写真タイムライン -->
-  <div class="card" id="photoTimelineCard" style="display:none;">
-    <div class="card-title" data-i18n="analysis.photo_timeline">写真タイムライン</div>
-    <div id="photoTimeline" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
   </div>
 </div>
 
@@ -943,26 +768,8 @@
   </div>
 </div>
 
-<!-- リマインダーモーダル -->
-<div id="reminderModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:var(--surface2);border:1px solid rgba(0,180,255,0.4);border-radius:14px;padding:24px;width:82%;max-width:320px;">
-    <div data-i18n="reminder.title" style="font-size:1rem;color:rgba(150,220,255,0.95);font-weight:700;margin-bottom:4px;text-align:center;">🔔 次回給水リマインダー</div>
-    <div data-i18n="reminder.subtitle" style="font-size:0.72rem;color:var(--text);opacity:0.6;text-align:center;margin-bottom:16px;">何時間後に通知を送りますか？</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-      <button onclick="setReminder(24)" data-i18n="reminder.24h" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">24時間後</button>
-      <button onclick="setReminder(48)" data-i18n="reminder.48h" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">48時間後</button>
-      <button onclick="setReminder(72)" data-i18n="reminder.72h" style="padding:12px 0;background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.35);border-radius:8px;color:rgba(150,220,255,0.9);font-size:0.9rem;cursor:pointer;font-weight:600;">72時間後</button>
-      <div style="display:flex;align-items:center;gap:4px;background:rgba(0,180,255,0.05);border:1px solid rgba(0,180,255,0.25);border-radius:8px;padding:4px 8px;">
-        <input id="reminderCustomHours" type="number" min="0.1" max="999" step="0.5" data-i18n-placeholder="reminder.custom_placeholder" placeholder="時間" style="width:100%;background:transparent;border:none;outline:none;color:rgba(150,220,255,0.9);font-size:0.9rem;font-weight:600;text-align:center;font-family:inherit;">
-        <button onclick="setReminderCustom()" data-i18n="reminder.custom_btn" style="background:rgba(0,180,255,0.2);border:1px solid rgba(0,180,255,0.4);border-radius:6px;color:rgba(150,220,255,0.9);font-size:0.72rem;padding:3px 8px;cursor:pointer;white-space:nowrap;">設定</button>
-      </div>
-    </div>
-    <button onclick="closeReminderModal()" data-i18n="reminder.cancel" style="width:100%;padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--text);font-size:0.85rem;cursor:pointer;opacity:0.7;">キャンセル</button>
-  </div>
-</div>
-
 <!-- テント名変更モーダル -->
-<div id="renameModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+<div id="renameModal" role="dialog" aria-modal="true" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:24px;width:80%;max-width:320px;">
     <div style="font-size:0.9rem;color:var(--text);margin-bottom:12px;">Rename Tent</div>
     <textarea id="renameInput" maxlength="24" rows="2" style="width:100%;font-size:1.1rem;background:transparent;color:var(--accent);border:none;border-bottom:1px solid var(--accent);outline:none;padding:4px 0;box-sizing:border-box;resize:none;font-family:inherit;line-height:1.3;"></textarea>
@@ -975,7 +782,7 @@
 </div>
 
 <!-- 肥料名変更モーダル -->
-<div id="renameFertilizerModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+<div id="renameFertilizerModal" role="dialog" aria-modal="true" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:24px;width:80%;max-width:320px;">
     <div style="font-size:0.9rem;color:var(--text);margin-bottom:12px;">Rename Fertilizer</div>
     <textarea id="renameFertilizerInput" maxlength="24" rows="2" style="width:100%;font-size:1.1rem;background:transparent;color:var(--accent);border:none;border-bottom:1px solid var(--accent);outline:none;padding:4px 0;box-sizing:border-box;resize:none;font-family:inherit;line-height:1.3;"></textarea>
@@ -995,7 +802,7 @@
   <!-- 写真比較オーバーレイ -->
   <div class="photo-overlay" id="photoOverlay">
     <span class="overlay-close" onclick="closeOverlay()">✕</span>
-    <img id="overlayImg" src="">
+    <img id="overlayImg" src="" alt="Grow photo">
   </div>
 
   <script>
@@ -1003,6 +810,7 @@
   let appLang = localStorage.getItem('appLang') || 'ja';
   const STRINGS = {
     ja: {
+      'tab.monitor':'📊 環境','tab.log':'💧 給水','tab.analysis':'📈 分析','tab.table':'📋 参考',
       'settings.tolTemp':'温度 ±°C','settings.tolHum':'湿度 ±%RH',
       'offline.banner':'オフライン中 — データはローカルに保存されます',
       'monitor.target_hum':'目標湿度:','monitor.ppfd_now':'現在PPFD:','monitor.ppfd_target':'/ 目標:',
@@ -1012,10 +820,10 @@
       'spot.in':'スポット内 ✓','spot.out':'スポット外','spot.in_range':'マイスポットの範囲内です',
       'spot.approach':' でマイスポットに近づきます','spot.unsaved':'このステージのスポット未保存',
       'spot.label':'📌 スポット: ','spot.temp_adj':'温度: ','spot.hum_adj':'湿度: ','spot.light_adj':'光量: ',
-      'ref.stage_guide':'ステージ目安','ref.soil':'土壌','ref.hydro':'ハイドロ/ココ',
+      'ref.stage_guide':'STAGE CHART','ref.soil':'土壌','ref.hydro':'ハイドロ/ココ',
       'ref.water_temp':'💧 水温目安: 18〜22°C（根の健康・溶存酸素量の観点から）',
-      'analysis.stage_progress':'ステージ進捗','analysis.fert_log':'肥料ログ',
-      'analysis.photo_timeline':'写真タイムライン','analysis.no_logs':'記録なし',
+      'analysis.stage_progress':'STAGE PROGRESS',
+      'analysis.no_logs':'記録なし',
       'analysis.total_days':'合計: ','analysis.days':'日',
       'toast.last_tent':'最後のテントは削除できません','toast.input_error':'⚠ 入力値を確認してください',
       'toast.import_ok':'インポート完了 ✓',
@@ -1026,35 +834,16 @@
       'confirm.erase_all':'全テントのデータを初期状態に戻しますか？',
       'confirm.delete_log':'このログを削除しますか？',
       'confirm.ok_btn':'削除','confirm.cancel_btn':'キャンセル',
-      'water.not_recorded':'未記録','water.today':'今日','water.days_ago':'日前',
-      'water.today_excl':'今日！','water.days_remaining':'あと','water.days_over':'日超過',
-      'ec.no_data':'EC記録不足','ec.no_data_action':'Input ECとRunoff ECを両方記録してください。',
-      'ec.runoff_high':'Runoff過多','ec.runoff_high_action':'塩分蓄積傾向です。Water +20% または軽いフラッシュを検討。',
-      'ec.runoff_low':'Runoff不足','ec.runoff_low_action':'吸収が強い状態です。EC設定と乾燥速度を再確認。',
-      'ec.stable':'EC安定','ec.stable_action':'排水ECは概ね安定です。現行レシピ維持でOK。',
       'action.hum_up':'湿度 +','action.hum_down':'湿度 -',
       'action.temp_down':'温度 -1.0℃','action.temp_up':'温度 +1.0℃',
       'action.flush':'フラッシュを推奨','action.ec_up':'ECを少し上げる','action.no_change':'変更不要',
-      'sweet.none_saved':'Sweet Spotはまだ保存されていません。',
       'popup.tap_to_close':'タップして閉じる',
-      'fert_log.count_suffix':'件','fert_log.empty':'Feeding ログを記録するとここに表示されます',
       'ppfd.high':'⚠ PPFD 高 / ','ppfd.low':'PPFD 低 / ',
       'ppfd.raise':'光量を上げてください（目安 ','ppfd.lower':'光量を下げてください（目安 ','ppfd.diff':'（差 ',
       'log.auto_note':'[AUTO] 危険状態が10分継続: ',
-      'reminder.title':'🔔 次回給水リマインダー',
-      'reminder.subtitle':'何時間後に通知を送りますか？',
-      'reminder.24h':'24時間後','reminder.48h':'48時間後','reminder.72h':'72時間後',
-      'reminder.custom_placeholder':'時間','reminder.custom_btn':'設定',
-      'reminder.cancel':'キャンセル',
-      'reminder.toast_setting':'🔔 設定中...','reminder.toast_set':'🔔 {h}時間後にリマインダーを設定しました',
-      'reminder.toast_cancel':'🔕 リマインダーをキャンセルしました',
-      'reminder.toast_fail':'⚠ サーバーへの接続に失敗しました',
-      'reminder.denied_alert':'🔔 通知が拒否されています。\niOSの場合: ホーム追加済みのPWAでのみ通知が使えます。\nSafari設定 → VPD PRO → 通知 → 許可に変更してください。',
-      'reminder.notify_body':'{name} の給水時間です',
-      'reminder.notify_title':'💧 Water Time!',
-      'reminder.scheduled':'に通知予定',
     },
     en: {
+      'tab.monitor':'📊 Monitor','tab.log':'💧 Feeding','tab.analysis':'📈 Analysis','tab.table':'📋 Reference',
       'settings.tolTemp':'Temp ±°C','settings.tolHum':'Humidity ±%RH',
       'offline.banner':'Offline — Data is saved locally',
       'monitor.target_hum':'Target RH:','monitor.ppfd_now':'PPFD:','monitor.ppfd_target':'/ Target:',
@@ -1064,10 +853,10 @@
       'spot.in':'In Spot ✓','spot.out':'Off Spot','spot.in_range':'Within your My Spot range',
       'spot.approach':' to reach My Spot','spot.unsaved':'No spot saved for this stage',
       'spot.label':'📌 Spot: ','spot.temp_adj':'Temp: ','spot.hum_adj':'RH: ','spot.light_adj':'Light: ',
-      'ref.stage_guide':'Stage Reference','ref.soil':'Soil','ref.hydro':'Hydro/Coco',
+      'ref.stage_guide':'STAGE CHART','ref.soil':'Soil','ref.hydro':'Hydro/Coco',
       'ref.water_temp':'💧 Water temp: 18–22°C (for root health & dissolved oxygen)',
-      'analysis.stage_progress':'Stage Progress','analysis.fert_log':'Fertilizer Log',
-      'analysis.photo_timeline':'Photo Timeline','analysis.no_logs':'No records',
+      'analysis.stage_progress':'STAGE PROGRESS',
+      'analysis.no_logs':'No records',
       'analysis.total_days':'Total: ','analysis.days':' days',
       'toast.last_tent':'Cannot delete the last tent','toast.input_error':'⚠ Please check your input values',
       'toast.import_ok':'Import complete ✓',
@@ -1078,36 +867,17 @@
       'confirm.erase_all':'Reset all tent data to defaults?',
       'confirm.delete_log':'Delete this log entry?',
       'confirm.ok_btn':'Delete','confirm.cancel_btn':'Cancel',
-      'water.not_recorded':'Not recorded','water.today':'Today','water.days_ago':' days ago',
-      'water.today_excl':'Today!','water.days_remaining':'In ','water.days_over':' days overdue',
-      'ec.no_data':'Insufficient EC data','ec.no_data_action':'Please record both Input EC and Runoff EC.',
-      'ec.runoff_high':'Runoff too high','ec.runoff_high_action':'Salt buildup tendency. Consider Water +20% or a light flush.',
-      'ec.runoff_low':'Runoff too low','ec.runoff_low_action':'Heavy uptake. Re-check EC setting and dry-back speed.',
-      'ec.stable':'EC stable','ec.stable_action':'Runoff EC is mostly stable. Keep current recipe.',
       'action.hum_up':'RH +','action.hum_down':'RH -',
       'action.temp_down':'Temp -1.0°C','action.temp_up':'Temp +1.0°C',
       'action.flush':'Flush recommended','action.ec_up':'Raise EC slightly','action.no_change':'No changes needed',
-      'sweet.none_saved':'No Sweet Spots saved yet.',
       'popup.tap_to_close':'Tap to close',
-      'fert_log.count_suffix':' entries','fert_log.empty':'Feeding logs will appear here',
       'ppfd.high':'⚠ PPFD High / ','ppfd.low':'PPFD Low / ',
       'ppfd.raise':'Increase light (est. ','ppfd.lower':'Decrease light (est. ','ppfd.diff':'(diff ',
       'log.auto_note':'[AUTO] Danger state continued 10 min: ',
-      'reminder.title':'🔔 Next Watering Reminder',
-      'reminder.subtitle':'How many hours from now?',
-      'reminder.24h':'In 24 hours','reminder.48h':'In 48 hours','reminder.72h':'In 72 hours',
-      'reminder.custom_placeholder':'hours','reminder.custom_btn':'Set',
-      'reminder.cancel':'Cancel',
-      'reminder.toast_setting':'🔔 Setting...','reminder.toast_set':'🔔 Reminder set for {h} hours from now',
-      'reminder.toast_cancel':'🔕 Reminder cancelled',
-      'reminder.toast_fail':'⚠ Failed to connect to server',
-      'reminder.denied_alert':'🔔 Notifications are blocked.\niOS: Push notifications only work in an installed PWA (Add to Home Screen).\nGo to Safari Settings → VPD PRO → Notifications → Allow.',
-      'reminder.notify_body':'{name} watering time',
-      'reminder.notify_title':'💧 Water Time!',
-      'reminder.scheduled':'notification scheduled',
     }
   };
   const tr = k => (STRINGS[appLang]?.[k]) ?? (STRINGS.ja[k] ?? k);
+  const esc = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
 
   /* === アプリの状態 === */
   const MAX_TENTS = 8;
@@ -1209,7 +979,6 @@
       stage: 'veg',
       stageDates: {},
       stageEndDates: {},
-      stageStartDate: null,
       temp: 24,
       hum: 60,
       dayNight: 'day',
@@ -1218,10 +987,8 @@
       co2: false,
       co2Level: 1000,
       ppfd: 300,
-      sweetSpots: [],
       stageSpots: {},
-      logs: [],
-      lastLog: null
+      logs: []
     };
   }
   // 飽和水蒸気圧
@@ -1289,8 +1056,6 @@
     loadTentToUI(currentTent);
     update();
     buildStageTable();
-    buildMatrix();
-    renderLogs();
   }
 
   let _renameTentIndex = 0;
@@ -1324,7 +1089,7 @@
     const modal = document.getElementById('renameFertilizerModal');
     const input = document.getElementById('renameFertilizerInput');
     const t = tents[currentTent];
-    input.value = (t.fertilizerList[i].name || `Fertilizer${i + 1}`);
+    input.value = (t.fertilizerList[i].name || `NUTRIENT${i + 1}`);
     modal.style.display = 'flex';
     setTimeout(() => input.focus(), 50);
   }
@@ -1353,14 +1118,9 @@
     buildTentBar();
     update();
     buildStageTable();
-    buildMatrix();
-    renderLogs();
     updateFeedingHeader();
     const logs = await dbGetAll('logs');
     renderStageTimeline(logs);
-    renderPhotoTimeline(logs);
-    renderFertLog(logs);
-    if (typeof updateReminderUI === 'function') updateReminderUI();
   }
   async function saveCurrentTentState() {
     const t = tents[currentTent];
@@ -1381,13 +1141,18 @@
     });
     document.getElementById('tempVal').value = useFahrenheit ? Math.round(t.temp * 9/5 + 32) : Math.round(t.temp);
     document.getElementById('humVal').value  = Math.round(t.hum);
-    document.getElementById('leafOffsetInput').value = useFahrenheit ? (t.leafOffset * 9/5).toFixed(1) : t.leafOffset.toFixed(1);
+    const leafOff = (t.leafOffset !== undefined && t.leafOffset !== null) ? t.leafOffset : -2.0;
+    document.getElementById('leafOffsetInput').value = useFahrenheit ? (leafOff * 9/5).toFixed(1) : leafOff.toFixed(1);
     document.getElementById('ppfdVal').value = t.ppfd || 0;
-    const logPpfdEl = document.getElementById('ppfdInput');
-    if (logPpfdEl) logPpfdEl.value = t.ppfd || '';    document.getElementById('btnDay').classList.toggle('active-day', t.dayNight==='day');
+    document.getElementById('btnDay').classList.toggle('active-day', t.dayNight==='day');
+    document.getElementById('btnDay').setAttribute('aria-pressed', t.dayNight==='day');
     document.getElementById('btnNight').classList.toggle('active-night', t.dayNight==='night');
+    document.getElementById('btnNight').setAttribute('aria-pressed', t.dayNight==='night');
     document.getElementById('btnLeaf').classList.toggle('active-leaf', t.leaf);
-    document.getElementById('btnCO2').classList.toggle('active-co2', t.co2);    updateStageSelector(t.stage);
+    document.getElementById('btnLeaf').setAttribute('aria-pressed', !!t.leaf);
+    document.getElementById('btnCO2').classList.toggle('active-co2', t.co2);
+    document.getElementById('btnCO2').setAttribute('aria-pressed', !!t.co2);
+    updateStageSelector(t.stage);
     document.getElementById('leafOffsetCard').style.display = t.leaf ? 'block' : 'none';
     document.getElementById('co2LevelCard').style.display = t.co2 ? 'block' : 'none';
     document.getElementById('co2LevelVal').value = t.co2Level || 1000;
@@ -1615,7 +1380,9 @@
   async function setDayNight(mode) {
     tents[currentTent].dayNight = mode;
     document.getElementById('btnDay').classList.toggle('active-day', mode === 'day');
+    document.getElementById('btnDay').setAttribute('aria-pressed', mode === 'day');
     document.getElementById('btnNight').classList.toggle('active-night', mode === 'night');
+    document.getElementById('btnNight').setAttribute('aria-pressed', mode === 'night');
     await dbPut('tents', tents[currentTent]);
     update();
   }
@@ -1653,6 +1420,7 @@
     const t = tents[currentTent];
     t.leaf = !t.leaf;
     document.getElementById('btnLeaf').classList.toggle('active-leaf', t.leaf);
+    document.getElementById('btnLeaf').setAttribute('aria-pressed', t.leaf);
     document.getElementById('leafOffsetCard').style.display = t.leaf ? 'block' : 'none';
     await dbPut('tents', t);
     updateCompactMode();
@@ -1662,6 +1430,7 @@
     const t = tents[currentTent];
     t.co2 = !t.co2;
     document.getElementById('btnCO2').classList.toggle('active-co2', t.co2);
+    document.getElementById('btnCO2').setAttribute('aria-pressed', t.co2);
     document.getElementById('co2LevelCard').style.display = t.co2 ? 'block' : 'none';
     if (t.co2) document.getElementById('co2LevelVal').value = t.co2Level || 1000;
     await dbPut('tents', t);
@@ -1687,7 +1456,6 @@
     if (isNaN(c)) c = 24;
     c = Math.max(10, Math.min(45, Math.round(c + delta)));
     tents[currentTent].temp = c;
-    tents[currentTent].valuesSet = true;
     document.getElementById('tempVal').value = useFahrenheit ? Math.round(c * 9/5 + 32) : c;
     document.getElementById('tempVal').style.color = 'var(--accent)';
     await dbPut('tents', tents[currentTent]);
@@ -1731,10 +1499,7 @@
       v = Math.max(0, Math.min(2000, Math.round(v)));
       tents[currentTent].ppfd = v;
       document.getElementById('ppfdVal').value = v;
-      const logPpfdEl = document.getElementById('ppfdInput');
-      if (logPpfdEl) logPpfdEl.value = v;
     }
-    tents[currentTent].valuesSet = true;
     await dbPut('tents', tents[currentTent]);
     ['tempVal','humVal','ppfdVal','co2LevelVal','leafOffsetInput'].forEach(id => {
       const el = document.getElementById(id);
@@ -1848,47 +1613,6 @@
   }
 
 
-  function updateWateringScheduleUI() {
-    const t = tents[currentTent];
-    if (!t) return;
-    const lastEl  = document.getElementById('lastWateringDate');
-    const sinceEl = document.getElementById('daysSinceWatering');
-    const nextEl  = document.getElementById('nextWateringDate');
-    const untilEl = document.getElementById('daysUntilWatering');
-    if (!lastEl) return;
-    const interval = t.wateringInterval || 2;
-    if (!t.lastWateringDate) {
-      lastEl.textContent = tr('water.not_recorded');
-      sinceEl.textContent = '';
-      nextEl.textContent = '—';
-      nextEl.style.color = 'var(--text)';
-      untilEl.textContent = '';
-      return;
-    }
-    const last = new Date(t.lastWateringDate);
-    const today = new Date();
-    last.setHours(0,0,0,0); today.setHours(0,0,0,0);
-    const daysSince = Math.floor((today - last) / 86400000);
-    lastEl.textContent = t.lastWateringDate.replace(/-/g, '/');
-    sinceEl.textContent = daysSince === 0 ? tr('water.today') : `${daysSince}${tr('water.days_ago')}`;
-    const next = new Date(last);
-    next.setDate(next.getDate() + interval);
-    const daysUntil = Math.floor((next - today) / 86400000);
-    nextEl.textContent = `${next.getMonth()+1}/${next.getDate()}`;
-    if (daysUntil < 0) {
-      nextEl.style.color = 'rgba(255,100,100,0.9)';
-      untilEl.textContent = `${Math.abs(daysUntil)}${tr('water.days_over')}`;
-      untilEl.style.color = 'rgba(255,100,100,0.8)';
-    } else if (daysUntil === 0) {
-      nextEl.style.color = 'var(--accent)';
-      untilEl.textContent = tr('water.today_excl');
-      untilEl.style.color = 'var(--accent)';
-    } else {
-      nextEl.style.color = 'var(--accent)';
-      untilEl.textContent = `${tr('water.days_remaining')}${daysUntil}${appLang === 'ja' ? '日' : ' days'}`;
-      untilEl.style.color = 'var(--text)';
-    }
-  }
 
   let currentFertTab = 0;
 
@@ -1907,7 +1631,7 @@
     }
     if (currentFertTab >= list.length) currentFertTab = list.length - 1;
     bar.innerHTML = list.map((f, i) => {
-      const label = f.name || `Fertilizer${i + 1}`;
+      const label = f.name || `NUTRIENT${i + 1}`;
       const active = i === currentFertTab;
       return `<div class="toggle-btn${active ? ' active-day' : ''}" data-index="${i}" onclick="selectFertTab(${i})" ondblclick="selectFertilizerTabAndEdit(${i})" style="white-space:nowrap;outline:none;">${label}</div>`;
     }).join('');
@@ -1961,7 +1685,8 @@
   async function addFertilizer() {
     const t = tents[currentTent];
     if (!t.fertilizerList) t.fertilizerList = [];
-    t.fertilizerList.push({ name: '', waterL: '', amountMl: '' });
+    const nextNum = t.fertilizerList.length + 1;
+    t.fertilizerList.push({ name: `NUTRIENT${nextNum}`, waterL: '', amountMl: '' });
     currentFertTab = t.fertilizerList.length - 1;
     await dbPut('tents', t);
     renderFertilizerTabs();
@@ -1992,7 +1717,6 @@
     const t = tents[currentTent];
     if (!t.stageSpots) t.stageSpots = {};
     t.stageSpots[t.stage] = { temp: t.temp, hum: t.hum, ppfd: t.ppfd };
-    t.lastSpotStage = t.stage;
     await dbPut('tents', t);
     updateSpotDisplay();
     update();
@@ -2337,8 +2061,6 @@
       ppfdAdviceEl.textContent = `${tr('ppfd.low')}${ppfdAction(ppfd, ppfdRange)}`;
       ppfdAdviceEl.style.color = '#ffaa00';
     }
-    const logPpfdEl = document.getElementById('ppfdInput');
-    if (logPpfdEl && !logPpfdEl.value) logPpfdEl.value = ppfd;
     updateSpotDisplay();
 
     // Theory 参考値をPPFD下に表示
@@ -2441,11 +2163,12 @@
   }
   function buildStageTable() {
     const vline = '1px solid rgba(255,255,255,0.5)';
-    const hdr = (t, i) => `<div style="font-size:0.7rem;font-weight:700;color:var(--text);opacity:0.6;text-align:center;border-left:${i===0?'none':vline};padding:0 1px;min-width:0;overflow:hidden;">${t}</div>`;
-    const cell = (t, i) => `<div style="font-size:0.7rem;color:var(--text);text-align:center;white-space:nowrap;border-left:${i===0?'none':vline};padding:0 1px;min-width:0;overflow:hidden;">${t}</div>`;
+    const hdr = (t, i) => `<div style="font-size:0.7rem;font-weight:700;color:var(--text);opacity:0.6;text-align:center;border-left:${i===0?'none':vline};padding:0 2px;min-width:0;">${t}</div>`;
+    const cell = (t, i) => `<div style="font-size:0.7rem;color:var(--text);text-align:center;white-space:nowrap;border-left:${i===0?'none':vline};padding:0 2px;min-width:0;">${t}</div>`;
     const fv = (n) => Number.isInteger(n) ? String(n) : n.toFixed(1);
-     const hdrs = ['°C','%RH','kPa',refCo2?'µmol*':'µmol','In EC','Out EC','pH'];
-    let html = `<div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;padding:4px 0 8px;border-bottom:1px solid rgba(255,255,255,0.2);">
+    const hdrs = ['°C','%RH','kPa',refCo2?'µmol*':'µmol','In EC','Out EC','pH'];
+    let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><div style="min-width:430px;">`;
+    html += `<div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;padding:4px 0 8px;border-bottom:1px solid rgba(255,255,255,0.2);">
       <span></span>${hdrs.map((t,i) => hdr(t,i)).join('')}
     </div>`;
     Object.keys(stages).filter(k => k !== 'harvest').forEach((key, ri) => {
@@ -2461,7 +2184,7 @@
         isDry ? '—' : `${s.ecRunoff[0].toFixed(1)}〜${s.ecRunoff[1].toFixed(1)}`,
         phData[refMedium][key] ?? '—',
       ];
-      html += `<div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);${zebra}">
+      html += `<div style="display:grid;grid-template-columns:clamp(44px,14.5vw,56px) 1fr 1fr 1fr 1.2fr 1fr 1fr 1fr;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);${zebra}">
         <div style="display:flex;align-items:center;gap:3px;">
           <div style="width:3px;height:18px;background:${s.color};border-radius:2px;flex-shrink:0;"></div>
           <span style="font-size:0.65rem;font-weight:700;color:${s.color};">${s.name}</span>
@@ -2469,35 +2192,49 @@
         ${vals.map((v,i) => cell(v,i)).join('')}
       </div>`;
     });
+    html += `</div></div>`;
     document.getElementById('stageTable').innerHTML = html;
   }
   /* === VPD マトリクス === */
   function buildMatrix() {
-    const temps = [18,20,22,24,26,28,30,32];
-    const hums  = [40,45,50,55,60,65,70,75,80];
-    let html = '<table style="width:100%; border-collapse: collapse;">';
-    html += '<tr><th style="font-size:0.7rem;color:var(--text)">℃/RH</th>' + hums.map(h => `<th style="font-size:0.7rem;color:var(--text)">${h}%</th>`).join('') + '</tr>';
-    temps.forEach(t => {
-      html += `<tr><td style="font-size:0.7rem;color:var(--text)">${t}°C</td>`;
-      hums.forEach(h => {
-        const v = calcVPD(t,h);
+    const temps = [];
+    for (let t = 18; t <= 30; t++) temps.push(t); // 1°C刻み（18〜30°C）
+    const hums = [];
+    for (let h = 80; h >= 40; h -= 5) hums.push(h); // 5%刻み（80%→40%）
+    const cellTD = 'font-size:0.62rem;text-align:center;padding:4px 4px;color:#fff;';
+    const headTH = 'font-size:0.62rem;color:var(--text);padding:5px 5px;font-weight:700;background:var(--surface);';
+    const stickyTH = headTH + 'position:sticky;left:0;z-index:2;';
+    const stickyTD = 'font-size:0.62rem;color:var(--text);padding:4px 6px;font-weight:700;background:var(--surface);position:sticky;left:0;z-index:1;text-align:center;';
+    let html = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">';
+    html += '<table style="border-collapse:collapse;white-space:nowrap;">';
+    // ヘッダー: RH\℃ + 温度列
+    html += `<tr><th style="${stickyTH}">RH\\℃</th>`;
+    html += temps.map(t => `<th style="${headTH}">${t}°</th>`).join('');
+    html += '</tr>';
+    // データ行
+    hums.forEach(h => {
+      html += `<tr><td style="${stickyTD}">${h}%</td>`;
+      temps.forEach(t => {
+        const v = calcVPD(t, h);
         let bg;
-        if (v < 0.4) bg = '#1a3a5c';
-        else if (v < 0.8) bg = '#1a4a3a';
-        else if (v < 1.2) bg = '#1a5c2e';
-        else if (v < 1.5) bg = '#3a5c1a';
-        else if (v < 1.8) bg = '#5c3a1a';
-        else bg = '#5c1a0d';
-        html += `<td style="background:${bg};color:#fff;font-size:0.7rem;text-align:center;padding:2px">${v.toFixed(2)}</td>`;
+        if (v < 0.4)      bg = '#4a1e6b'; // purple - 低すぎ
+        else if (v < 0.8) bg = '#1a5c6b'; // blue - やや低
+        else if (v < 1.2) bg = '#2e8b3a'; // green - 理想
+        else if (v < 1.5) bg = '#8b8b2e'; // yellow-green - やや高
+        else if (v < 1.8) bg = '#a06a2e'; // orange - 高
+        else              bg = '#8b2e2e'; // red - 高すぎ
+        html += `<td style="background:${bg};${cellTD}">${v.toFixed(2)}</td>`;
       });
       html += '</tr>';
     });
-    html += '</table>';
+    html += '</table></div>';
     document.getElementById('vpdMatrix').innerHTML = html;
   }
 
   /* === ログ機能 === */
-  function triggerPhoto(type) {
+  let _photoSource = 'log'; // 'log' or 'gallery'
+  function triggerPhoto(type, source) {
+    _photoSource = source || 'log';
     if (type === 'camera') {
       document.getElementById('photoCamera').click();
     } else {
@@ -2525,20 +2262,36 @@
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async ev => {
-      pendingPhoto = await compressPhoto(ev.target.result);
-      const preview = document.getElementById('photoPreview');
-      preview.src = pendingPhoto;
-      preview.style.display = 'block';
-      document.getElementById('photoClear').style.display = 'inline-block';
+      const compressed = await compressPhoto(ev.target.result);
+      if (_photoSource === 'gallery') {
+        // GROW GALLERY: 写真のみのログを直接保存
+        const t = tents[currentTent];
+        const now = new Date();
+        const ts = now.toLocaleString('ja-JP');
+        const log = {
+          id: Date.now() + '-photo-' + t.id,
+          tentId: t.id, timestamp: ts, ts: Date.now(),
+          temp: t.temp, hum: t.hum, stage: t.stage,
+          dayNight: t.dayNight, leaf: t.leaf, co2: t.co2,
+          leafOffset: t.leafOffset,
+          ph: null, ec: null, runoffEc: null,
+          ppfd: String(t.ppfd), note: '',
+          photo: compressed, fertilizers: []
+        };
+        await dbPut('logs', log);
+        t.logs.push(log.id);
+        await dbPut('tents', t);
+        const allLogs = await dbGetAll('logs');
+        renderStageTimeline(allLogs);
+        _photoSource = 'log';
+      } else {
+        pendingPhoto = compressed;
+      }
     };
     reader.readAsDataURL(file);
     e.target.value = '';
   }
-  function clearPhoto() {
-    pendingPhoto = null;
-    const _prev = document.getElementById('photoPreview'); if (_prev) _prev.style.display = 'none';
-    const _clr = document.getElementById('photoClear'); if (_clr) _clr.style.display = 'none';
-  }
+  function clearPhoto() { pendingPhoto = null; }
   async function saveLog() {
     // 入力バリデーション
     const phEl = document.getElementById('phInput');
@@ -2577,24 +2330,19 @@
       ph: document.getElementById('phInput')?.value || null,
       ec: document.getElementById('ecInput')?.value || null,
       runoffEc: document.getElementById('runoffEcInput')?.value || null,
-      ppfd: document.getElementById('ppfdInput')?.value || String(t.ppfd || ''),
-      note: document.getElementById('logNote')?.value || '',
+      ppfd: String(t.ppfd || ''),
+      note: (document.getElementById('feedingNoteInput')?.value || '').trim(),
       photo: pendingPhoto,
       fertilizers: (t.fertilizerList || []).filter(f => f.name || f.amountMl)
     };
     t.logs.push(log.id);
-    t.lastLog = new Date().toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
-    t.lastWateringDate = new Date().toISOString().slice(0, 10);
     await dbPut('logs', log);
     await dbPut('tents', t);
-    const _pp = document.getElementById('ppfdInput'); if (_pp) _pp.value = '';
-    const _ln = document.getElementById('logNote'); if (_ln) _ln.value = '';
+    const feedNoteEl = document.getElementById('feedingNoteInput');
+    if (feedNoteEl) feedNoteEl.value = '';
     clearPhoto();
     buildTentBar();
-    renderLogs();
-    updateWateringScheduleUI();
-    renderFertLog();
-    const fertNames = (log.fertilizers || []).map(f => f.name).filter(Boolean).join('、');
+    const fertNames = (log.fertilizers || []).map(f => esc(f.name)).filter(Boolean).join('、');
     showSavePopup('Feeding Saved ✅', [
       `📅 ${log.timestamp}`,
       stages[log.stage] ? `🌱 ${stages[log.stage].name}` : '',
@@ -2603,10 +2351,6 @@
       log.ec ? `⚡ Input EC: ${log.ec} mS${log.runoffEc ? '　🔄 Runoff: ' + log.runoffEc + ' mS' : ''}` : '',
       fertNames ? `🌿 ${fertNames}` : ''
     ].filter(Boolean));
-    // アクティブなリマインダーがなければ自動でモーダル表示
-    const hasReminder = localStorage.getItem(reminderKey('scheduledAt'));
-    const stillActive = hasReminder && new Date(hasReminder) > new Date();
-    if (!stillActive) setTimeout(() => openReminderModal(), 1800);
   }
 
   function adjustRunoffEc(delta) {
@@ -2617,80 +2361,6 @@
     input.value = val.toFixed(1);
   }
 
-  function getEcInsight(inputEc, runoffEc) {
-    const i = Number(inputEc);
-    const r = Number(runoffEc);
-    if (!i || !r) return { label: tr('ec.no_data'), action: tr('ec.no_data_action') };
-    const diff = r - i;
-    if (diff >= 0.4) return { label: tr('ec.runoff_high'), action: tr('ec.runoff_high_action') };
-    if (diff <= -0.3) return { label: tr('ec.runoff_low'), action: tr('ec.runoff_low_action') };
-    return { label: tr('ec.stable'), action: tr('ec.stable_action') };
-  }
-
-  function renderSweetSpots() {
-    const el = document.getElementById('sweetSpotList');
-    if (!el) return;
-    const t = tents[currentTent];
-    const list = Array.isArray(t.sweetSpots) ? t.sweetSpots : [];
-    if (!list.length) {
-      el.innerHTML = `<div class="analysis-note">${tr('sweet.none_saved')}</div>`;
-      return;
-    }
-    el.innerHTML = list.map((s, idx) => `
-      <div class="sweetspot-item">
-        <div class="sweetspot-top">
-          <div class="sweetspot-title">#${idx + 1} ${stages[s.stage].name}</div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <div class="status-badge status-ok">${s.vpd.toFixed(2)} kPa</div>
-            <button onclick="deleteSweetSpot('${s.id}')" style="background:none;border:none;color:var(--text);cursor:pointer;font-size:1rem;padding:2px 6px;">✕</button>
-          </div>
-        </div>
-        <div class="sweetspot-meta">
-          Temp ${Number(s.temp).toFixed(1)}℃ / RH ${Math.round(Number(s.hum))}% / PPFD ${Number(s.ppfd || 0)} µmol<br>
-          CO₂ ${s.co2 ? 'ON' : 'OFF'} / Input EC ${s.inputEc || '—'} / Runoff EC ${s.runoffEc || '—'}
-        </div>
-      </div>
-    `).join('');
-  }
-
-  async function renderLogs() {
-    const listEl = document.getElementById('logList');
-    if (!listEl) return;
-    listEl.innerHTML = '';
-    const logs = await dbGetAll('logs');
-    const filtered = logs.filter(l => l.tentId === tents[currentTent].id).sort((a,b) => String(b.id).localeCompare(String(a.id))).slice(0, 50);
-    if (filtered.length === 0) {
-      listEl.innerHTML = '<div style="text-align:center;font-size:0.8rem;color:var(--text);">No records</div>';
-      return;
-    }
-    filtered.forEach(l => {
-      const item = document.createElement('div');
-      item.className = 'log-item';
-      item.innerHTML = `<div class="log-item-header"><div>${fmtTs(l.timestamp)}</div><div style="font-size:0.7rem;">${stages[l.stage] ? stages[l.stage].name : (l.stage || '')}</div></div>`;
-      let details = `<div style="font-size:0.75rem;color:var(--text);">温度 ${l.temp}℃ / 湿度 ${l.hum}% / VPD ${calcVPD(l.temp,l.hum).toFixed(2)}</div>`;
-      if (l.ppfd) details += `<div style="font-size:0.7rem;color:var(--text);">PPFD ${l.ppfd}</div>`;
-      if (l.ph) details += `<div style="font-size:0.7rem;color:var(--text);">pH ${l.ph}</div>`;
-      if (l.ec || l.runoffEc) details += `<div style="font-size:0.7rem;color:var(--text);">Input EC ${l.ec || '—'} / Runoff EC ${l.runoffEc || '—'}</div>`;
-      if (l.note) details += `<div style="font-size:0.7rem;color:var(--text);">📝 ${l.note}</div>`;
-      if (l.fertilizers && l.fertilizers.length) {
-        const fStr = l.fertilizers.map(f => `${f.name || '?'} ${f.amountMl || '?'}ml/${f.waterL || '?'}L`).join('、');
-        details += `<div style="font-size:0.7rem;color:var(--text);">🌿 ${fStr}</div>`;
-      }
-      item.innerHTML += details;
-      if (l.photo) {
-        const img = document.createElement('img');
-        img.className = 'log-photo';
-        img.src = l.photo;
-        item.appendChild(img);
-      }
-      const del = document.createElement('button');
-      del.className = 'log-del';
-      del.textContent = '✕';
-      del.onclick = async () => { await dbDelete('logs', l.id); renderLogs(); };
-      item.appendChild(del);
-      listEl.appendChild(item);
-    });
-  }
   async function clearLogs(skipConfirm = false) {
     const tentName = tents[currentTent].name || `Tent ${currentTent + 1}`;
     if (!skipConfirm && !(await customConfirm(tr('confirm.clear_logs').replace('${name}', tentName)))) return;
@@ -2699,7 +2369,6 @@
       if (l.tentId === tents[currentTent].id) await dbDelete('logs', l.id);
     }
     tents[currentTent].logs = [];
-    tents[currentTent].lastLog = null;
     tents[currentTent].temp = 24;
     tents[currentTent].hum = 60;
     tents[currentTent].ppfd = 300;
@@ -2711,11 +2380,8 @@
     await dbPut('tents', tents[currentTent]);
     loadTentToUI(currentTent);
     buildTentBar();
-    renderLogs();
     const logs2 = await dbGetAll('logs');
     renderStageTimeline(logs2);
-    renderPhotoTimeline(logs2);
-    renderFertLog(logs2);
   }
 
   /* === 入力調整関数 === */
@@ -2733,19 +2399,15 @@
     val = Math.max(0, Math.round((val + delta) * 10) / 10);
     input.value = val.toFixed(1);
   }
-  function adjustPpfd(delta) {
-    const input = document.getElementById('ppfdInput');
-    let val = parseInt(input.value || input.placeholder || '0');
-    if (isNaN(val)) val = 0;
-    val = Math.max(0, Math.round((val + delta) / 50) * 50);
-    input.value = val;
-  }
 
   /* === Backup機能 === */
   async function exportData() {
     const tentsData = tents.slice();
     const logs = await dbGetAll('logs');
-    const data = { tents: tentsData, logs };
+    const settingsKeys = ['appLang','vpdTheme','dayCountVisible','spotTolTemp','spotTolHum','spotTolPpfd','dryTemp','dryHum','dryVpd','showRunoffEc'];
+    const settings = {};
+    settingsKeys.forEach(k => { const v = localStorage.getItem(k); if (v !== null) settings[k] = v; });
+    const data = { tents: tentsData, logs, settings };
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -2790,14 +2452,18 @@
         for (const log of data.logs) {
           await dbPut('logs', log);
         }
+        // Restore settings from backup
+        if (data.settings && typeof data.settings === 'object') {
+          Object.entries(data.settings).forEach(([k, v]) => localStorage.setItem(k, v));
+          appLang = localStorage.getItem('appLang') || 'ja';
+          loadDrySettings();
+        }
         currentTent = 0;
         buildTentBar();
         loadTentToUI(0);
         buildStageTable();
-        buildMatrix();
-        renderLogs();
         update();
-        buildEcReferenceChart();
+        applyLang();
         showToast(tr('toast.import_ok'));
       } else {
         showToast(tr('toast.import_bad_format'));
@@ -2812,12 +2478,6 @@
     document.getElementById('photoOverlay').style.display = 'none';
   }
 
-  async function deleteSweetSpot(id) {
-    const t = tents[currentTent];
-    t.sweetSpots = (t.sweetSpots || []).filter(s => s.id !== id);
-    await dbPut('tents', t);
-    renderSweetSpots();
-  }
   async function eraseAllData() {
     if (!(await customConfirm(tr('confirm.erase_all')))) return;
     // 全ログ削除
@@ -2836,64 +2496,8 @@
     buildTentBar();
     update();
     buildStageTable();
-    buildMatrix();
     renderStageTimeline([]);
-    renderPhotoTimeline([]);
-    renderFertLog([]);
-    await renderLogs();
   }
-
-  /* === Analytics・グラフ機能 === */
-  function buildEcReferenceChart() {
-    const el = document.getElementById('ecReferenceChart');
-    if (!el) return;
-    const keys = Object.keys(stages).filter(k => stages[k].ecInput[1] > 0);
-    const maxEc = 2.5;
-
-    let html = `<div style="display:flex;gap:4px;margin-bottom:6px;font-size:0.7rem;color:var(--text);">
-      <span style="width:72px;flex-shrink:0;"></span>
-      <span style="color:#00ccff;">■ Input EC</span>
-      <span style="color:#00ff88;margin-left:8px;">■ Runoff EC</span>
-    </div>`;
-
-    keys.forEach(k => {
-      const s = stages[k];
-      const inp = s.ecInput;
-      const run = s.ecRunoff;
-      const inpLeft = (inp[0] / maxEc * 100).toFixed(1);
-      const inpWidth = ((inp[1] - inp[0]) / maxEc * 100).toFixed(1);
-      const runLeft = (run[0] / maxEc * 100).toFixed(1);
-      const runWidth = ((run[1] - run[0]) / maxEc * 100).toFixed(1);
-
-      html += `<div style="margin-bottom:10px;">
-        <div style="font-size:0.75rem;color:var(--text);margin-bottom:3px;">${s.name}</div>
-        <div style="position:relative;height:22px;background:var(--surface2);border-radius:4px;overflow:visible;">
-          <div style="position:absolute;left:${inpLeft}%;width:${inpWidth}%;height:100%;background:rgba(0,204,255,0.35);border:1.5px solid #00ccff;border-radius:3px;box-sizing:border-box;"></div>
-          <div style="position:absolute;left:${inpLeft}%;width:${inpWidth}%;height:100%;display:flex;align-items:center;justify-content:center;">
-            <span style="font-size:0.72rem;font-weight:700;color:#00ccff;white-space:nowrap;">${inp[0].toFixed(1)}〜${inp[1].toFixed(1)}</span>
-          </div>
-        </div>
-        <div style="position:relative;height:22px;background:var(--surface2);border-radius:4px;overflow:visible;margin-top:3px;">
-          <div style="position:absolute;left:${runLeft}%;width:${runWidth}%;height:100%;background:rgba(0,255,136,0.25);border:1.5px solid #00ff88;border-radius:3px;box-sizing:border-box;"></div>
-          <div style="position:absolute;left:${runLeft}%;width:${runWidth}%;height:100%;display:flex;align-items:center;justify-content:center;">
-            <span style="font-size:0.72rem;font-weight:700;color:#00ff88;white-space:nowrap;">${run[0].toFixed(1)}〜${run[1].toFixed(1)}</span>
-          </div>
-        </div>
-      </div>`;
-    });
-
-    // スケール目盛り
-    const ticks = [0, 0.5, 1.0, 1.5, 2.0, 2.5];
-    html += `<div style="position:relative;height:16px;margin-top:2px;">`;
-    ticks.forEach(v => {
-      html += `<span style="position:absolute;left:${(v/maxEc*100).toFixed(1)}%;transform:translateX(-50%);font-size:0.65rem;color:var(--text);">${v.toFixed(1)}</span>`;
-    });
-    html += `</div>`;
-
-    el.innerHTML = html;
-  }
-
-
 
   /**
    * 簡易的なAI診断とスケジュール生成
@@ -3001,13 +2605,31 @@ function classifyVpd(vpd, lo, hi) {
       dbPut('tents', t);
       if (navigator.vibrate) navigator.vibrate([200,100,200]);
       showToast(tr('toast.danger_10min'));
-      renderLogs();
     }
   }
   /* === Analysis 新機能 === */
-  function fmtTs(ts) {
-    if (!ts) return '';
-    return String(ts).replace(/^\d{4}\//, '').replace(/:\d{2}$/, '');
+  function fmtTsParts(ts) {
+    if (!ts) return { time: '', date: '' };
+    const s = String(ts).replace(/^\d{4}\//, '');
+    const m = s.match(/^(\d{1,2}\/\d{1,2})\s+(\d{1,2}:\d{2})/);
+    return m ? { time: m[2], date: m[1] } : { time: '', date: s };
+  }
+  const _stagePages = {};
+  const LOGS_PER_PAGE = 6;
+  function stagePageNav(key, dir) {
+    const total = _stagePages[key]?.total || 1;
+    let page = (_stagePages[key]?.page || 0) + dir;
+    if (page < 0) page = 0;
+    if (page >= total) page = total - 1;
+    _stagePages[key].page = page;
+    const container = document.getElementById('slog-' + key);
+    if (!container) return;
+    const items = container.querySelectorAll('.slog-item');
+    items.forEach((el, i) => {
+      el.style.display = (i >= page * LOGS_PER_PAGE && i < (page + 1) * LOGS_PER_PAGE) ? '' : 'none';
+    });
+    const nav = container.querySelector('.slog-nav');
+    if (nav) nav.querySelector('.slog-page').textContent = `${page + 1}/${total}`;
   }
   async function renderStageTimeline(_logs) {
     const el = document.getElementById('stageTimeline');
@@ -3025,8 +2647,8 @@ function classifyVpd(vpd, lo, hi) {
       totalEl.textContent = '';
     }
     const allStageLogs = (_logs || (await dbGetAll('logs')))
-      .filter(l => l.tentId === t.id && (l.type === 'monitor' || l.fertilizers))
-      .sort((a, b) => b.ts - a.ts);
+      .filter(l => l.tentId === t.id && (l.type === 'monitor' || l.fertilizers || l.photo))
+      .sort((a, b) => a.ts - b.ts);
     const logsByStage = {};
     allStageLogs.forEach(l => {
       if (!logsByStage[l.stage]) logsByStage[l.stage] = [];
@@ -3041,14 +2663,19 @@ function classifyVpd(vpd, lo, hi) {
       const nextDateStr = nextKey && t.stageDates && t.stageDates[nextKey];
       let daysText = '';
       if (dateStr && key !== 'harvest') {
-        // Dry は Flush 開始日を起算点にする
-        const baseDate = key === 'dry' && t.stageDates && t.stageDates['flush']
-          ? t.stageDates['flush'] : dateStr;
-        const start = new Date(baseDate);
-        // Dry の終了は harvest 日か、次ステージか、現在日
+        // BUG-2 fix: Dry の起算点は自身の開始日（dateStr）に統一。Flush 込みにしない。
+        const start = new Date(dateStr);
+        // Dry の終了は harvest 日を優先。それ以外は「次に存在するステージ開始日」→「現在」へフォールバック。
         const dryEnd = key === 'dry' && t.stageDates && t.stageDates['harvest']
           ? t.stageDates['harvest'] : null;
-        const end = dryEnd ? new Date(dryEnd) : (nextDateStr ? new Date(nextDateStr) : (isCurrent ? new Date() : null));
+        // BUG-3 fix: スキップで nextDateStr が無い場合、STAGE_ORDER を先送りして次に stageDates がある key を探す。
+        let fallbackNext = nextDateStr;
+        if (!fallbackNext && t.stageDates) {
+          for (let j = idx + 1; j < order.length; j++) {
+            if (t.stageDates[order[j]]) { fallbackNext = t.stageDates[order[j]]; break; }
+          }
+        }
+        const end = dryEnd ? new Date(dryEnd) : (fallbackNext ? new Date(fallbackNext) : (isCurrent ? new Date() : null));
         if (end) {
           const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
           daysText = days > 0 ? `${days}${tr('analysis.days')}` : `0${tr('analysis.days')}`;
@@ -3059,27 +2686,56 @@ function classifyVpd(vpd, lo, hi) {
       const glow = isCurrent ? `box-shadow:0 0 10px ${color};` : '';
       const border = isCurrent ? `border:1.5px solid ${color};` : 'border:1.5px solid transparent;';
       const stageLogs = logsByStage[key] || [];
+      const totalPages = Math.ceil(stageLogs.length / LOGS_PER_PAGE) || 1;
+      const curPage = Math.min((_stagePages[key]?.page || 0), totalPages - 1);
+      _stagePages[key] = { page: curPage, total: totalPages };
       const logsHtml = stageLogs.length > 0
-        ? stageLogs.map(l => {
+        ? stageLogs.map((l, idx) => {
+            const hidden = idx >= (curPage + 1) * LOGS_PER_PAGE || idx < curPage * LOGS_PER_PAGE;
+            const isPhotoOnly = l.photo && l.type !== 'monitor' && (!l.fertilizers || l.fertilizers.length === 0);
+            if (isPhotoOnly) {
+              const d = getLogDate(l);
+              const dateLabel = `${d.getMonth()+1}/${d.getDate()}`;
+              const timeLabel = `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+              const pNoteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${l.note.replace(/</g,'&lt;')}</div>` : '';
+              const pLogId = String(l.id).replace(/'/g, "\\'");
+              return `<div class="slog-item" onclick="event.stopPropagation();editLogNote('${pLogId}')" style="${hidden ? 'display:none;' : ''}cursor:pointer;">
+                <div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:var(--text);">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="opacity:0.85;white-space:nowrap;">${dateLabel} 📷 ${timeLabel}</span>
+                    <img src="${l.photo}" style="width:44px;height:44px;object-fit:cover;border-radius:5px;cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation();(()=>{document.getElementById('overlayImg').src=this.src;document.getElementById('photoOverlay').style.display='flex';})()">
+                    <span style="flex:1;"></span>
+                    <button onclick="event.stopPropagation();deleteGalleryPhoto('${l.id}')" style="width:20px;height:20px;border-radius:50%;background:rgba(255,60,60,0.85);border:none;color:#fff;font-size:0.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;">✕</button>
+                  </div>${pNoteHtml}
+                </div>
+              </div>`;
+            }
             const isMonitor = l.type === 'monitor';
             const details = isMonitor
-              ? [l.temp ? `${l.temp}°C` : '', l.leafVpd ? `VPD ${l.leafVpd}` : '', l.ppfd ? `PPFD ${l.ppfd}` : ''].filter(Boolean).join('　')
+              ? [l.temp ? `${Math.round(l.temp * 10) / 10}°C` : '', l.hum ? `${Math.round(l.hum)}%` : '', l.leafVpd ? `VPD ${l.leafVpd}` : '', l.ppfd ? `PPFD ${l.ppfd}` : ''].filter(Boolean).join('　')
               : [l.ph ? `pH ${l.ph}` : '', l.ec ? `EC ${l.ec}` : '', l.runoffEc ? `→${l.runoffEc}` : ''].filter(Boolean).join('　');
             const label = isMonitor ? '📊' : '💧';
-            const _fertList = tents[currentTent].fertilizerList || [];
             const fertTags = !isMonitor && l.fertilizers && l.fertilizers.length
-              ? `<div style="display:flex;justify-content:flex-end;opacity:1;font-size:0.72rem;color:var(--text);margin-top:0;padding-right:0;width:100%;box-sizing:border-box;">${(l.fertilizers).map(f => `${f.name || '?'}${f.amountMl ? ' ' + f.amountMl + 'ml' : ''}`).join('　')}</div>`
+              ? `<div style="display:flex;justify-content:flex-end;opacity:1;font-size:0.72rem;color:var(--text);margin-top:0;padding-right:0;width:100%;box-sizing:border-box;">${(l.fertilizers).map(f => `${esc(f.name) || '?'}${f.amountMl ? ' ' + f.amountMl + 'ml' : ''}`).join('　')}</div>`
               : '';
-            return `<div
-                ondblclick="(async()=>{if(await customConfirm(tr('confirm.delete_log')))deleteStageLog('${l.id}','${key}')})()"
-                ontouchend="(function(el){var now=Date.now();if(el._dt&&now-el._dt<400){el._dt=null;(async()=>{if(await customConfirm(tr('confirm.delete_log')))deleteStageLog('${l.id}','${key}')})()}else{el._dt=now}})(this)"
-                style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:var(--text);cursor:pointer;">
+            const photoThumb = l.photo ? `<div style="margin-top:3px;"><img src="${l.photo}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="(()=>{document.getElementById('overlayImg').src=this.src;document.getElementById('photoOverlay').style.display='flex';})()"></div>` : '';
+            const noteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${l.note.replace(/</g,'&lt;')}</div>` : '';
+            const logId = String(l.id).replace(/'/g, "\\'");
+            return `<div class="slog-item"
+                ondblclick="(async()=>{if(this._nt){clearTimeout(this._nt);this._nt=null;}if(await customConfirm(tr('confirm.delete_log')))deleteStageLog('${logId}','${key}')})()"
+                ontouchend="(function(el){var now=Date.now();if(el._dt&&now-el._dt<400){el._dt=null;if(el._nt){clearTimeout(el._nt);el._nt=null;}(async()=>{if(await customConfirm(tr('confirm.delete_log')))deleteStageLog('${logId}','${key}')})()}else{el._dt=now;el._nt=setTimeout(function(){el._nt=null;editLogNote('${logId}')},450)}})(this)"
+                onclick="event.stopPropagation();(function(el){if(el._nt)return;el._nt=setTimeout(function(){el._nt=null;editLogNote('${logId}')},300)})(this)"
+                style="${hidden ? 'display:none;' : ''}padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:var(--text);cursor:pointer;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="opacity:0.85;white-space:nowrap;margin-right:6px;">${label} ${fmtTs(l.timestamp)}</span>
+                <span style="opacity:0.85;white-space:nowrap;margin-right:6px;">${fmtTsParts(l.timestamp).date} ${label} ${fmtTsParts(l.timestamp).time}</span>
                 <span style="text-align:right;opacity:1;flex:1;">${details}</span>
-              </div>${fertTags}
+              </div>${fertTags}${noteHtml}${photoThumb}
             </div>`;
-          }).join('')
+          }).join('') + (totalPages > 1 ? `<div class="slog-nav" style="display:flex;justify-content:center;align-items:center;gap:12px;padding:6px 0;font-size:0.72rem;">
+            <button onclick="event.stopPropagation();stagePageNav('${key}',-1)" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--accent);padding:2px 8px;cursor:pointer;font-size:0.72rem;">◀</button>
+            <span class="slog-page" style="color:var(--text);opacity:0.8;">${curPage + 1}/${totalPages}</span>
+            <button onclick="event.stopPropagation();stagePageNav('${key}',1)" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--accent);padding:2px 8px;cursor:pointer;font-size:0.72rem;">▶</button>
+          </div>` : '')
         : `<div style="font-size:0.75rem;color:var(--text);opacity:0.7;padding:6px 0;text-align:center;">${tr('analysis.no_logs')}</div>`;
       html += `<div style="opacity:${opacity};">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -3109,20 +2765,35 @@ function classifyVpd(vpd, lo, hi) {
     const scrollY = window.scrollY;
     const dbKey = /^\d+$/.test(id) ? Number(id) : id;
     await dbDelete('logs', dbKey);
-    const t = tents[currentTent];
-    if (stageKey && t.stageDates && t.stageDates[stageKey]) {
-      delete t.stageDates[stageKey];
-      recalculateStageEndDates(t);
-      await dbPut('tents', t);
-    }
+    // BUG-1 fix: ログ削除はログ削除だけに留め、ステージ開始日 (stageDates) には触れない。
+    // stageDates を消したい場合は setStage() 側で行う。
     const logs = await dbGetAll('logs');
     renderStageTimeline(logs);
-    renderPhotoTimeline(logs);
-    renderFertLog(logs);
-    await renderLogs();
     openStages.forEach(id => {
       const el = document.getElementById(id);
       const key = id.replace('slog-', '');
+      const ic = document.getElementById('sicon-' + key);
+      if (el) { el.style.display = ''; if (ic) ic.textContent = '▼'; }
+    });
+    window.scrollTo(0, scrollY);
+  }
+  async function editLogNote(id) {
+    const dbKey = /^\d+$/.test(id) ? Number(id) : id;
+    const log = await dbGet('logs', dbKey);
+    if (!log) return;
+    const current = log.note || '';
+    const input = prompt('📝 メモを入力', current);
+    if (input === null) return;
+    log.note = input.trim();
+    await dbPut('logs', log);
+    const openStages = Array.from(document.querySelectorAll('[id^="slog-"]'))
+      .filter(el => el.style.display !== 'none').map(el => el.id);
+    const scrollY = window.scrollY;
+    const logs = await dbGetAll('logs');
+    renderStageTimeline(logs);
+    openStages.forEach(sid => {
+      const el = document.getElementById(sid);
+      const key = sid.replace('slog-', '');
       const ic = document.getElementById('sicon-' + key);
       if (el) { el.style.display = ''; if (ic) ic.textContent = '▼'; }
     });
@@ -3137,24 +2808,26 @@ function classifyVpd(vpd, lo, hi) {
     if (ic) ic.textContent = open ? '▶' : '▼';
   }
 
-  async function renderPhotoTimeline(_logs) {
-    const card = document.getElementById('photoTimelineCard');
-    const container = document.getElementById('photoTimeline');
-    if (!card || !container) return;
-    const logs = _logs || (await dbGetAll('logs'));
-    if (!tents[currentTent]) return;
-    const photos = logs.filter(l => l.tentId === tents[currentTent].id && l.photo)
-      .sort((a, b) => getLogDate(a) - getLogDate(b));
-    if (!photos.length) { card.style.display = 'none'; return; }
-    card.style.display = 'block';
-    container.innerHTML = photos.map(l => {
-      const d = getLogDate(l);
-      const label = `${d.getMonth()+1}/${d.getDate()}`;
-      return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-        <img src="${l.photo}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="(()=>{document.getElementById('overlayImg').src='${l.photo}';document.getElementById('photoOverlay').style.display='flex';})()">
-        <span style="font-size:0.65rem;color:var(--text);opacity:0.6;">${label}</span>
-      </div>`;
-    }).join('');
+
+  async function deleteGalleryPhoto(id) {
+    if (!(await customConfirm(tr('confirm.delete_log')))) return;
+    const openStages = Array.from(document.querySelectorAll('[id^="slog-"]'))
+      .filter(el => el.style.display !== 'none').map(el => el.id);
+    const scrollY = window.scrollY;
+    const dbKey = /^\d+$/.test(id) ? Number(id) : id;
+    await dbDelete('logs', dbKey);
+    const t = tents[currentTent];
+    t.logs = (t.logs || []).filter(lid => lid !== id);
+    await dbPut('tents', t);
+    const allLogs = await dbGetAll('logs');
+    renderStageTimeline(allLogs);
+    openStages.forEach(sid => {
+      const el = document.getElementById(sid);
+      const key = sid.replace('slog-', '');
+      const ic = document.getElementById('sicon-' + key);
+      if (el) { el.style.display = ''; if (ic) ic.textContent = '▼'; }
+    });
+    window.scrollTo(0, scrollY);
   }
 
   /* === 初期化 === */
@@ -3183,9 +2856,7 @@ function classifyVpd(vpd, lo, hi) {
     loadDrySettings();
     buildStageTable();
     buildMatrix();
-    buildEcReferenceChart();
     update();
-    renderLogs();
     // オフライン状態の監視
     const banner = document.getElementById('offlineBanner');
     window.addEventListener('online',  () => { banner.style.display = 'none'; });
@@ -3197,7 +2868,6 @@ function classifyVpd(vpd, lo, hi) {
       updateThemeToggleUI(true);
     }
     // restore language
-    appLang = localStorage.getItem('appLang') || 'ja';
     applyLang();
   }
   function updateThemeToggleUI(isLight) {
@@ -3285,24 +2955,9 @@ function classifyVpd(vpd, lo, hi) {
     update();
   }
   function loadDrySettings() {
-    const temp = JSON.parse(localStorage.getItem('dryTemp') || '[15,16]');
-    const hum  = JSON.parse(localStorage.getItem('dryHum')  || '[58,62]');
-    const vpd  = JSON.parse(localStorage.getItem('dryVpd')  || '[0.6,0.8]');
-    stages.dry.temp = temp;
-    stages.dry.hum  = hum;
-    stages.dry.vpd  = vpd;
-    const tMinEl = document.getElementById('dryTempMin');
-    const tMaxEl = document.getElementById('dryTempMax');
-    const hMinEl = document.getElementById('dryHumMin');
-    const hMaxEl = document.getElementById('dryHumMax');
-    const vMinEl = document.getElementById('dryVpdMin');
-    const vMaxEl = document.getElementById('dryVpdMax');
-    if (tMinEl) tMinEl.value = temp[0];
-    if (tMaxEl) tMaxEl.value = temp[1];
-    if (hMinEl) hMinEl.value = hum[0];
-    if (hMaxEl) hMaxEl.value = hum[1];
-    if (vMinEl) vMinEl.value = vpd[0];
-    if (vMaxEl) vMaxEl.value = vpd[1];
+    stages.dry.temp = JSON.parse(localStorage.getItem('dryTemp') || '[15,16]');
+    stages.dry.hum  = JSON.parse(localStorage.getItem('dryHum')  || '[58,62]');
+    stages.dry.vpd  = JSON.parse(localStorage.getItem('dryVpd')  || '[0.6,0.8]');
   }
   function closeSettings(e) {
     if (e.target === document.getElementById('settingsModal')) {
@@ -3317,64 +2972,27 @@ function classifyVpd(vpd, lo, hi) {
       tab.classList.add('active');
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       document.getElementById('tab-' + target).classList.add('active');
-      if (target === 'log') { updateFeedingHeader(); updateFeedingSpotDisplay(); updateWateringScheduleUI(); renderFertilizerTabs(); restoreModeInputs(spotMode); }
-      if (target === 'analysis') { dbGetAll('logs').then(logs => { renderStageTimeline(logs); renderPhotoTimeline(logs); renderFertLog(logs); }); }
+      if (target === 'log') { updateFeedingHeader(); updateFeedingSpotDisplay(); renderFertilizerTabs(); restoreModeInputs(spotMode); }
+      if (target === 'analysis') { dbGetAll('logs').then(logs => { renderStageTimeline(logs); }); }
     };
   });
-  /* === 肥料ログ === */
-  async function renderFertLog(_logs) {
-    const listEl = document.getElementById('fertLogList');
-    const emptyEl = document.getElementById('fertLogEmpty');
-    if (!listEl) return;
-    const logs = (_logs || (await dbGetAll('logs')))
-      .filter(l => l.tentId === tents[currentTent].id && l.type !== 'monitor' && l.fertilizers && l.fertilizers.length > 0)
-      .sort((a, b) => getLogDate(b) - getLogDate(a));
-    if (!logs.length) {
-      listEl.innerHTML = '';
-      if (emptyEl) emptyEl.style.display = 'block';
-      return;
-    }
-    if (emptyEl) emptyEl.style.display = 'none';
-    // ステージ順にグループ化
-    const grouped = {};
-    logs.forEach(l => {
-      const k = l.stage || '';
-      if (!grouped[k]) grouped[k] = [];
-      grouped[k].push(l);
-    });
-    const orderedKeys = [...STAGE_ORDER.filter(k => grouped[k]), ...Object.keys(grouped).filter(k => !STAGE_ORDER.includes(k))];
-    listEl.innerHTML = orderedKeys.map(stageKey => {
-      const stageLogs = grouped[stageKey];
-      const stageName = stages[stageKey] ? stages[stageKey].name : (stageKey || '—');
-      const stageColor = stages[stageKey] ? stages[stageKey].color : '#888';
-      const bodyId = 'fertlog-body-' + stageKey;
-      const iconId = 'fertlog-icon-' + stageKey;
-      const isCur = tents[currentTent].stage === stageKey;
-      const logsHtml = stageLogs.map(l => {
-        const tags = (l.fertilizers || []).map(f =>
-          `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);border-radius:12px;padding:2px 8px;font-size:0.72rem;color:var(--accent);white-space:nowrap;">${f.name}${f.amountMl ? ' ' + f.amountMl + 'ml' : ''}</span>`
-        ).join('');
-        const ecInfo = [l.ph != null ? `pH ${l.ph}` : '', l.ec != null ? `EC ${l.ec}` : '', l.runoffEc != null ? `→ ${l.runoffEc}` : ''].filter(Boolean).join(' · ');
-        return `<div style="border-top:1px solid rgba(255,255,255,0.07);padding:8px 0;">
-          <div style="font-size:0.78rem;font-weight:600;color:#fff;margin-bottom:4px;">${fmtTs(l.timestamp || l.date || '')}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;${ecInfo ? 'margin-bottom:4px;' : ''}">${tags}</div>
-          ${ecInfo ? `<div style="font-size:0.72rem;color:var(--text);opacity:0.85;">${ecInfo}</div>` : ''}
-        </div>`;
-      }).join('');
-      return `<div style="border-radius:10px;overflow:hidden;border:1px solid ${isCur ? stageColor : 'var(--border)'};${isCur ? `box-shadow:0 0 8px ${stageColor}55;` : ''}">
-        <div onclick="(function(){var b=document.getElementById('${bodyId}');var i=document.getElementById('${iconId}');var open=b.style.display!=='none';b.style.display=open?'none':'';i.textContent=open?'▶':'▼';})()" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;cursor:pointer;background:${stageColor}18;">
-          <span style="font-size:0.82rem;font-weight:700;color:${stageColor};">${stageName}${isCur ? ' ◀' : ''}</span>
-          <span style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:0.72rem;color:var(--text);opacity:0.6;">${stageLogs.length}${tr('fert_log.count_suffix')}</span>
-            <span id="${iconId}" style="font-size:0.65rem;color:var(--text);opacity:0.5;">▼</span>
-          </span>
-        </div>
-        <div id="${bodyId}" style="padding:0 12px 8px;">${logsHtml}</div>
-      </div>`;
-    }).join('');
-  }
-
   window.addEventListener('load', init);
+
+  /* === iOS ダブルタップ拡大防止（Safari 保険） === */
+  (() => {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 350) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+    // ピンチ防止
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('gesturechange', (e) => e.preventDefault());
+    document.addEventListener('gestureend', (e) => e.preventDefault());
+  })();
 
   /* === Runoff EC 表示/非表示（Input ECラベル長押し） === */
   (() => {
@@ -3450,16 +3068,20 @@ function classifyVpd(vpd, lo, hi) {
     const leafVpdEl = document.getElementById('vpdLeaf');
     const leafVpd = leafVpdEl ? (parseFloat(leafVpdEl.textContent) || 0) : 0;
     const now = new Date();
+    const noteEl = document.getElementById('monitorNoteInput');
+    const note = noteEl ? noteEl.value.trim() : '';
     const log = {
-      id: Date.now(),
+      // BUG-4 fix: tentId をサフィックスに付けて同ミリ秒衝突を回避（給水ログと同じ方式）。
+      id: Date.now() + '-' + t.id,
       type: 'monitor',
       tentId: t.id,
       stage: t.stage,
       timestamp: now.toLocaleString('ja-JP'),
       ts: now.getTime(),
-      temp, hum, ppfd, co2val, leafVpd
+      temp, hum, ppfd, co2val, leafVpd, note
     };
     await dbPut('logs', log);
+    if (noteEl) noteEl.value = '';
     showSavePopup('Monitor Saved ✅', [
       `📅 ${log.timestamp}`,
       `🌡 Temp: ${log.temp}°C　💧 Humidity: ${log.hum}%`,
@@ -3471,137 +3093,9 @@ function classifyVpd(vpd, lo, hi) {
 
   </script>
 
-  <!-- ── Push Notification / Reminder ───────────────────────────────────────── -->
-  <script>
-  const PUSH_SERVER = 'https://vpd-push-worker.thc420fix.workers.dev';
-  const VAPID_PUBLIC_KEY = 'BBoc4StKxUF3g5ko8k6eY56GEbgayjmlXHZOR6_vXiwHcbI79g56r-nbMyHNYoO1XyhLsrAsVKuwSTNObwU0yH0';
-
-  function urlB64ToUint8(b64) {
-    const pad = '='.repeat((4 - b64.length % 4) % 4);
-    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
-    return Uint8Array.from(raw, c => c.charCodeAt(0));
-  }
-
-  function reminderKey(suffix) {
-    return `reminder_${currentTent}_${suffix}`;
-  }
-
-  async function getPushSubId() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') return null;
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8(VAPID_PUBLIC_KEY)
-      });
-    }
-    // Always re-register to ensure server has latest subscription
-    try {
-      const resp = await fetch(`${PUSH_SERVER}/subscribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sub.toJSON())
-      });
-      const data = await resp.json();
-      return data.id;
-    } catch { return null; }
-  }
-
-  async function setReminder(hours) {
-    closeReminderModal();
-    showToast(tr('reminder.toast_setting'));
-    const subId = await getPushSubId();
-    if (!subId) {
-      if (Notification.permission === 'denied') {
-        alert(tr('reminder.denied_alert'));
-      } else {
-        showToast('⚠ 通知の設定に失敗しました');
-      }
-      return;
-    }
-    const tentName = tents[currentTent]?.name || 'Tent';
-    const scheduledAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
-    try {
-      const resp = await fetch(`${PUSH_SERVER}/schedule`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subscriptionId: subId,
-          title: tr('reminder.notify_title'),
-          body: tr('reminder.notify_body').replace('{name}', tentName),
-          scheduledAt
-        })
-      });
-      const data = await resp.json();
-      localStorage.setItem(reminderKey('scheduleId'), data.id);
-      localStorage.setItem(reminderKey('scheduledAt'), scheduledAt);
-      const hLabel = hours < 1 ? `${Math.round(hours * 60)}${appLang === 'ja' ? '分' : 'min'}` : `${hours}${appLang === 'ja' ? '時間' : 'h'}`;
-      showToast(tr('reminder.toast_set').replace('{h}', hLabel));
-    } catch { showToast(tr('reminder.toast_fail')); }
-    updateReminderUI();
-  }
-
-  async function setReminderCustom() {
-    const h = parseFloat(document.getElementById('reminderCustomHours').value);
-    if (!h || h < 0.1) return;
-    await setReminder(h);
-  }
-
-  async function cancelReminder() {
-    const scheduleId = localStorage.getItem(reminderKey('scheduleId'));
-    if (scheduleId) {
-      try { await fetch(`${PUSH_SERVER}/schedule/${scheduleId}`, { method: 'DELETE' }); } catch {}
-      localStorage.removeItem(reminderKey('scheduleId'));
-      localStorage.removeItem(reminderKey('scheduledAt'));
-    }
-    showToast(tr('reminder.toast_cancel'));
-    updateReminderUI();
-  }
-
-  function updateReminderUI() {
-    const activeBox = document.getElementById('reminderActiveBox');
-    const setBtn    = document.getElementById('reminderSetBtn');
-    const label     = document.getElementById('reminderTimeLabel');
-    if (!activeBox || !setBtn) return;
-    const scheduledAt = localStorage.getItem(reminderKey('scheduledAt'));
-    if (scheduledAt && new Date(scheduledAt) > new Date()) {
-      const d = new Date(scheduledAt);
-      label.textContent = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${tr('reminder.scheduled')}`;
-      activeBox.style.display = 'flex';
-      setBtn.style.display = 'none';
-    } else {
-      if (scheduledAt) { // expired
-        localStorage.removeItem(reminderKey('scheduleId'));
-        localStorage.removeItem(reminderKey('scheduledAt'));
-      }
-      activeBox.style.display = 'none';
-      setBtn.style.display = 'block';
-    }
-  }
-
-  function openReminderModal() {
-    const m = document.getElementById('reminderModal');
-    m.style.display = 'flex';
-    document.getElementById('reminderCustomHours').value = '';
-  }
-
-  function closeReminderModal() {
-    document.getElementById('reminderModal').style.display = 'none';
-  }
-
-  // Update reminder UI whenever tent changes
-  const _origSwitchTent = window.switchTent;
-  document.addEventListener('DOMContentLoaded', () => {
-    updateReminderUI();
-  });
-  </script>
-
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed:', err));
     }
   </script>
 </body>
