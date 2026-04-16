@@ -1,6 +1,8 @@
-const CACHE_VERSION = 'vpd-pro-v9';
+const CACHE_VERSION = 'vpd-pro-v10';
 const ASSETS = [
+  './',
   './index.html',
+  './icon-180.png',
   './icon-192.png',
   './icon-512.png',
   './manifest.json'
@@ -11,6 +13,7 @@ self.addEventListener('install', e => {
     caches.open(CACHE_VERSION)
       .then(c => c.addAll(ASSETS))
       .then(() => self.skipWaiting())
+      .catch(err => console.error('SW install failed:', err))
   );
 });
 
@@ -23,7 +26,13 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : { title: '💧 Water Time!', body: '給水の時間です' };
+  let data;
+  try {
+    data = e.data ? e.data.json() : null;
+  } catch (_) {
+    data = null;
+  }
+  if (!data) data = { title: '💧 Water Time!', body: '給水の時間です' };
   e.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
@@ -50,9 +59,8 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(cached => {
       if (cached) return cached;
       return fetch(e.request).then(response => {
-        if (!response || response.status !== 200 || response.type === 'opaque') {
-          return response;
-        }
+        if (!response || response.status !== 200) return response;
+        if (response.type === 'opaque') return response;
         const clone = response.clone();
         caches.open(CACHE_VERSION).then(c => c.put(e.request, clone));
         return response;
