@@ -2697,7 +2697,7 @@ function classifyVpd(vpd, lo, hi) {
               const d = getLogDate(l);
               const dateLabel = `${d.getMonth()+1}/${d.getDate()}`;
               const timeLabel = `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
-              const pNoteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${l.note.replace(/</g,'&lt;')}</div>` : '';
+              const pNoteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${esc(l.note)}</div>` : '';
               const pLogId = String(l.id).replace(/'/g, "\\'");
               return `<div class="slog-item" onclick="event.stopPropagation();editLogNote('${pLogId}')" style="${hidden ? 'display:none;' : ''}cursor:pointer;">
                 <div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:var(--text);">
@@ -2719,7 +2719,7 @@ function classifyVpd(vpd, lo, hi) {
               ? `<div style="display:flex;justify-content:flex-end;opacity:1;font-size:0.72rem;color:var(--text);margin-top:0;padding-right:0;width:100%;box-sizing:border-box;">${(l.fertilizers).map(f => `${esc(f.name) || '?'}${f.amountMl ? ' ' + f.amountMl + 'ml' : ''}`).join('　')}</div>`
               : '';
             const photoThumb = l.photo ? `<div style="margin-top:3px;"><img src="${l.photo}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="(()=>{document.getElementById('overlayImg').src=this.src;document.getElementById('photoOverlay').style.display='flex';})()"></div>` : '';
-            const noteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${l.note.replace(/</g,'&lt;')}</div>` : '';
+            const noteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${esc(l.note)}</div>` : '';
             const logId = String(l.id).replace(/'/g, "\\'");
             return `<div class="slog-item"
                 ondblclick="(async()=>{if(this._nt){clearTimeout(this._nt);this._nt=null;}if(await customConfirm(tr('confirm.delete_log')))deleteStageLog('${logId}','${key}')})()"
