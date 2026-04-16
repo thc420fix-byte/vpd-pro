@@ -365,6 +365,11 @@
       font-size: 1.6rem;
       color: #fff;
       cursor: pointer;
+      z-index: 10;
+      background: none;
+      border: none;
+      padding: 8px;
+      line-height: 1;
     }
     .toast {
       position: fixed;
@@ -800,9 +805,9 @@
 
 
   <!-- 写真比較オーバーレイ -->
-  <div class="photo-overlay" id="photoOverlay">
-    <span class="overlay-close" onclick="closeOverlay()">✕</span>
-    <img id="overlayImg" src="" alt="Grow photo">
+  <div class="photo-overlay" id="photoOverlay" onclick="closeOverlay()">
+    <button class="overlay-close" onclick="closeOverlay()">✕</button>
+    <img id="overlayImg" src="" alt="Grow photo" onclick="event.stopPropagation()">
   </div>
 
   <script>
