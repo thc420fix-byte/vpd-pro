@@ -3110,8 +3110,21 @@ function classifyVpd(vpd, lo, hi) {
     _pinBuf = '';
   }
 
+  async function _pinNukeAllData() {
+    try {
+      await new Promise(r => {
+        const req = indexedDB.deleteDatabase('VPD_FINAL_DB');
+        req.onsuccess = r; req.onerror = r;
+      });
+    } catch(e) {}
+    localStorage.clear();
+  }
+
   function _showBlankScreen() {
-    document.getElementById('blankScreen').style.display = 'block';
+    const bs = document.getElementById('blankScreen');
+    bs.onclick = null;
+    bs.style.pointerEvents = 'none';
+    bs.style.display = 'block';
   }
 
   function _updatePinDots() {
@@ -3151,10 +3164,28 @@ function classifyVpd(vpd, lo, hi) {
         localStorage.setItem(_PIN_FAILS, String(f));
         if (f === 1) _pinCaptureIntruder();
         if (f >= _PIN_MAX) {
-          localStorage.setItem(_PIN_LOCKED, 'true');
+          // 3回目: 即ロック＋全データ削除
           _hidePinOverlay();
+          _pinNukeAllData();
           _showBlankScreen();
+        } else if (f === 2) {
+          // 2回目: おバカメッセージ → 完全ブラック
+          _hidePinOverlay();
+          const bs = document.getElementById('blankScreen');
+          bs.onclick = null;
+          bs.style.pointerEvents = 'none';
+          const msg = document.createElement('div');
+          msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:1.5rem;font-weight:700;opacity:1;transition:opacity 0.9s ease;font-family:inherit;text-align:center;line-height:1.7;pointer-events:none;';
+          msg.innerHTML = 'lol... seriously? 🤦<br><span style="font-size:0.9rem;font-weight:400;opacity:0.75;">that\'s not it, buddy</span>';
+          bs.style.position = 'relative';
+          bs.appendChild(msg);
+          bs.style.display = 'block';
+          setTimeout(() => {
+            msg.style.opacity = '0';
+            setTimeout(() => msg.remove(), 900);
+          }, 1800);
         } else {
+          // 1回目
           document.getElementById('pinFailInfo').textContent = `⚠ ${f} / ${_PIN_MAX} attempts`;
           _pinShake();
         }
