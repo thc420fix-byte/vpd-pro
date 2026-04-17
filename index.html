@@ -1620,6 +1620,7 @@
 
 
   let currentFertTab = 0;
+  const _fertLastTap = {};  // renderFertilizerTabs再作成でもリセットされないよう外部管理
 
   function renderFertilizerTabs() {
     const bar = document.getElementById('fertTabBar');
@@ -1638,7 +1639,7 @@
     bar.innerHTML = list.map((f, i) => {
       const label = f.name || `NUTRIENT${i + 1}`;
       const active = i === currentFertTab;
-      return `<div class="toggle-btn${active ? ' active-day' : ''}" data-index="${i}" onclick="selectFertTab(${i})" ondblclick="selectFertilizerTabAndEdit(${i})" style="white-space:nowrap;outline:none;">${label}</div>`;
+      return `<div class="toggle-btn fert-tab-btn${active ? ' active-day' : ''}" data-index="${i}" onclick="(function(){var now=Date.now();if(_fertLastTap[${i}]&&now-_fertLastTap[${i}]<350){_fertLastTap[${i}]=0;selectFertilizerTabAndEdit(${i});}else{_fertLastTap[${i}]=now;selectFertTab(${i});}})()" style="white-space:nowrap;outline:none;">${label}</div>`;
     }).join('');
 
     // タブコンテンツ
@@ -2989,8 +2990,8 @@ function classifyVpd(vpd, lo, hi) {
     document.addEventListener('touchend', (e) => {
       const now = Date.now();
       if (now - lastTouchEnd <= 350) {
-        // tent-btn は独自ダブルタップで名前変更するため除外
-        if (!e.target.closest('.tent-btn')) {
+        // tent-btn / fert-tab-btn は独自ダブルタップで名前変更するため除外
+        if (!e.target.closest('.tent-btn') && !e.target.closest('.fert-tab-btn')) {
           e.preventDefault();
         }
       }
