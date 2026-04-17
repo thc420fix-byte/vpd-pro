@@ -580,7 +580,7 @@
             <button class="small-btn" onclick="adjustCo2Level(-100)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
             <div style="display:flex;align-items:baseline;gap:5px;width:210px;justify-content:center;">
               <span style="font-size:1.1rem;color:var(--text);font-weight:500;">CO₂</span>
-              <input id="co2LevelVal" type="text" inputmode="decimal" value="1000" onfocus="this.select()" onchange="applyCo2Level(this.value)" style="width:68px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
+              <input id="co2LevelVal" type="text" inputmode="decimal" value="1000" onfocus="this.select()" onchange="applyCo2Level(this.value)" style="width:92px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
               <span style="font-size:1.1rem;color:var(--text);">ppm</span>
             </div>
             <button class="small-btn" onclick="adjustCo2Level(100)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">+</button>
@@ -845,7 +845,6 @@
       'toast.last_tent':'最後のテントは削除できません','toast.input_error':'⚠ 入力値を確認してください',
       'toast.import_ok':'インポート完了 ✓',
       'toast.import_bad_format':'⚠ 不正なファイル形式です','toast.import_error':'⚠ 読み込みエラー: ',
-      'toast.danger_10min':'⚠ 危険状態が10分継続しています',
       'confirm.delete_tent':'"${name}" を削除しますか？\nこのテントのログも全て削除されます。',
       'confirm.clear_logs':'「${name}」の全記録を削除しますか？',
       'confirm.erase_all':'全テントのデータを初期状態に戻しますか？',
@@ -857,7 +856,6 @@
       'popup.tap_to_close':'タップして閉じる',
       'ppfd.high':'⚠ PPFD 高 / ','ppfd.low':'PPFD 低 / ',
       'ppfd.raise':'光量を上げてください（目安 ','ppfd.lower':'光量を下げてください（目安 ','ppfd.diff':'（差 ',
-      'log.auto_note':'[AUTO] 危険状態が10分継続: ',
     },
     en: {
       'tab.monitor':'📊 Monitor','tab.log':'💧 Feeding','tab.analysis':'📈 Analysis','tab.table':'📋 Reference',
@@ -878,7 +876,6 @@
       'toast.last_tent':'Cannot delete the last tent','toast.input_error':'⚠ Please check your input values',
       'toast.import_ok':'Import complete ✓',
       'toast.import_bad_format':'⚠ Invalid file format','toast.import_error':'⚠ Load error: ',
-      'toast.danger_10min':'⚠ Danger state has continued for 10 minutes',
       'confirm.delete_tent':'Delete "${name}"?\nAll logs for this tent will also be deleted.',
       'confirm.clear_logs':'Delete all records for "${name}"?',
       'confirm.erase_all':'Reset all tent data to defaults?',
@@ -890,7 +887,6 @@
       'popup.tap_to_close':'Tap to close',
       'ppfd.high':'⚠ PPFD High / ','ppfd.low':'PPFD Low / ',
       'ppfd.raise':'Increase light (est. ','ppfd.lower':'Decrease light (est. ','ppfd.diff':'(diff ',
-      'log.auto_note':'[AUTO] Danger state continued 10 min: ',
     }
   };
   const tr = k => (STRINGS[appLang]?.[k]) ?? (STRINGS.ja[k] ?? k);
@@ -1423,7 +1419,11 @@
     });
     ['tempVal','humVal','ppfdVal','co2LevelVal','leafOffsetInput'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) { el.style.fontSize = valSize; el.style.width = valWidth; }
+      if (el) {
+        el.style.fontSize = valSize;
+        // co2LevelVal は4桁(1000-1500ppm)表示のため広めに確保
+        el.style.width = (id === 'co2LevelVal') ? (compact ? '72px' : '92px') : valWidth;
+      }
     });
     document.querySelectorAll('#tab-monitor .card span[style*="1.1rem"], #tab-monitor .card span[style*="0.9rem"]').forEach(el => {
       if ((!el.id || !el.id.includes('selector')) && !el.closest('.card-title')) el.style.fontSize = labelSize;
@@ -2009,17 +2009,14 @@
       badge.textContent = check < lo ? tr('vpd.too_low') : tr('vpd.too_high');
       const ppfdRange = getPpfdRange(t.stage, t.co2);
       recEl.textContent = generateAction(check, lo, hi, temp, hum, Number(t.ppfd || 0), ppfdRange, null, null);
-      maybeRecordDangerEvent(state, check);
     } else if (state === 'warning') {
       badge.classList.add('status-warning');
       badge.textContent = tr('vpd.warning');
       recEl.textContent = tr('vpd.rec_warning');
-      dangerState[String(tents[currentTent].id)] = null;
     } else {
       badge.classList.add('status-ok');
       badge.textContent = tr('vpd.ok');
       recEl.textContent = `${stages[t.stage].name}${tr('vpd.rec_ok')}`;
-      dangerState[String(tents[currentTent].id)] = null;
     }
 
     // My Spot mode override
@@ -2523,7 +2520,6 @@
    * 温度・湿度・ステージから簡単なスケジュールを提示する
    */
 
-  let dangerState = {};
   function getLogDate(log) {
     const t = log.ts || Date.parse(log.timestamp);
     return Number.isFinite(t) ? new Date(t) : new Date();
@@ -2590,41 +2586,6 @@ function classifyVpd(vpd, lo, hi) {
     return unique.slice(0, 3).map((x, i) => `${i + 1}. ${x.text}`).join("\n");
   }
 
-  async function maybeRecordDangerEvent(state, vpd) {
-    if (state !== 'danger') return;
-    const key = String(tents[currentTent].id);
-    const started = dangerState[key]?.startedAt || Date.now();
-    if (!dangerState[key]) dangerState[key] = { startedAt: started, alerted: false };
-    const elapsed = Date.now() - dangerState[key].startedAt;
-    if (elapsed >= 10 * 60 * 1000 && !dangerState[key].alerted) {
-      dangerState[key].alerted = true;
-      const id = Date.now() + '-danger-' + tents[currentTent].id;
-      const t = tents[currentTent];
-      const autoLog = {
-        id,
-        tentId: tents[currentTent].id,
-        timestamp: new Date().toLocaleString('ja-JP'),
-        ts: Date.now(),
-        temp: t.temp,
-        hum: t.hum,
-        stage: t.stage,
-        dayNight: t.dayNight,
-        leaf: t.leaf,
-        co2: t.co2,
-        leafOffset: t.leafOffset,
-        ph: null,
-        ec: null,
-        ppfd: null,
-        note: `${tr('log.auto_note')}${vpd.toFixed(2)} kPa`,
-        photo: null
-      };
-      t.logs.push(id);
-      dbPut('logs', autoLog);
-      dbPut('tents', t);
-      if (navigator.vibrate) navigator.vibrate([200,100,200]);
-      showToast(tr('toast.danger_10min'));
-    }
-  }
   /* === Analysis 新機能 === */
   function fmtTsParts(ts) {
     if (!ts) return { time: '', date: '' };
