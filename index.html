@@ -234,8 +234,12 @@
     #ecInput::placeholder,
     #runoffEcInput::placeholder,
     #waterTempInput::placeholder {
-      color: rgba(255,255,255,0.35);
+      color: var(--muted);
       opacity: 1;
+    }
+    /* iOS Safari での入力文字色を確実に適用 */
+    #phInput, #ecInput, #runoffEcInput, #waterTempInput {
+      -webkit-text-fill-color: var(--accent);
     }
     .small-btn {
       flex: 0 0 auto;
@@ -1154,15 +1158,34 @@
     const rawOffset = parseFloat(document.getElementById('leafOffsetInput').value);
     t.leafOffset = useFahrenheit ? rawOffset * 5/9 : rawOffset;
     t.ppfd = parseInt(document.getElementById('ppfdVal').value || '0', 10) || 0;
+    // 給水フォームの入力値をテントに紐付けて保存
+    t.lastFeeding = {
+      ph:       document.getElementById('phInput')?.value       ?? '',
+      ec:       document.getElementById('ecInput')?.value       ?? '',
+      runoffEc: document.getElementById('runoffEcInput')?.value ?? '',
+      waterTemp:document.getElementById('waterTempInput')?.value?? ''
+    };
     await dbPut('tents', t);
   }
   function loadTentToUI(i) {
     const t = tents[i];
     const monitorColor = 'var(--accent)';
-    ['tempVal','humVal','ppfdVal','co2LevelVal','leafOffsetInput'].forEach(id => {
+    ['tempVal','humVal','ppfdVal','co2LevelVal','leafOffsetInput',
+     'phInput','ecInput','runoffEcInput','waterTempInput'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.color = monitorColor;
     });
+    // 給水フォームをこのテントの前回値で復元
+    const lf = t.lastFeeding || {};
+    const _setFeed = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+    _setFeed('phInput',       lf.ph);
+    _setFeed('ecInput',       lf.ec);
+    _setFeed('runoffEcInput', lf.runoffEc);
+    _setFeed('waterTempInput',lf.waterTemp);
+    // modeInputCache もこのテントの値に同期
+    modeInputCache[spotMode] = {
+      ph: lf.ph ?? '', ec: lf.ec ?? '', runoffEc: lf.runoffEc ?? '', waterTemp: lf.waterTemp ?? ''
+    };
     document.getElementById('tempVal').value = useFahrenheit ? Math.round(t.temp * 9/5 + 32) : Math.round(t.temp);
     document.getElementById('humVal').value  = Math.round(t.hum);
     const leafOff = (t.leafOffset !== undefined && t.leafOffset !== null) ? t.leafOffset : -2.0;
@@ -2366,8 +2389,14 @@
       fertilizers: (t.fertilizerList || []).filter(f => f.name || f.amountMl)
     };
     t.logs.push(log.id);
+    // Save後も入力値をテントに紐付けて保持（タブ切替後も残る）
+    t.lastFeeding = {
+      ph: log.ph || '', ec: log.ec || '',
+      runoffEc: log.runoffEc || '', waterTemp: log.waterTemp || ''
+    };
     await dbPut('logs', log);
     await dbPut('tents', t);
+    saveModeInputs(); // modeInputCache を最新値に同期
     const feedNoteEl = document.getElementById('feedingNoteInput');
     if (feedNoteEl) feedNoteEl.value = '';
     clearPhoto();

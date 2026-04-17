@@ -232,9 +232,14 @@
     }
     #phInput::placeholder,
     #ecInput::placeholder,
-    #runoffEcInput::placeholder {
-      color: rgba(255,255,255,0.35);
+    #runoffEcInput::placeholder,
+    #waterTempInput::placeholder {
+      color: var(--muted);
       opacity: 1;
+    }
+    /* iOS Safari での入力文字色を確実に適用 */
+    #phInput, #ecInput, #runoffEcInput, #waterTempInput {
+      -webkit-text-fill-color: var(--accent);
     }
     .small-btn {
       flex: 0 0 auto;
@@ -697,6 +702,16 @@
         </div>
         <button class="small-btn" onclick="adjustPh(0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">+</button>
       </div>
+      <!-- Water Temp -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <button class="small-btn" onclick="adjustWaterTemp(-0.5)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
+        <div style="display:flex;align-items:baseline;gap:5px;width:210px;justify-content:center;">
+          <span style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:80px;text-align:right;">Water Temp</span>
+          <input id="waterTempInput" type="text" inputmode="decimal" placeholder="20.0" onfocus="this.select()" style="width:52px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
+          <span style="font-size:1.1rem;color:var(--text);min-width:45px;">°C</span>
+        </div>
+        <button class="small-btn" onclick="adjustWaterTemp(0.5)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">+</button>
+      </div>
       <!-- Input EC -->
       <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <button class="small-btn" onclick="adjustEc(-0.1)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
@@ -1143,15 +1158,34 @@
     const rawOffset = parseFloat(document.getElementById('leafOffsetInput').value);
     t.leafOffset = useFahrenheit ? rawOffset * 5/9 : rawOffset;
     t.ppfd = parseInt(document.getElementById('ppfdVal').value || '0', 10) || 0;
+    // 給水フォームの入力値をテントに紐付けて保存
+    t.lastFeeding = {
+      ph:       document.getElementById('phInput')?.value       ?? '',
+      ec:       document.getElementById('ecInput')?.value       ?? '',
+      runoffEc: document.getElementById('runoffEcInput')?.value ?? '',
+      waterTemp:document.getElementById('waterTempInput')?.value?? ''
+    };
     await dbPut('tents', t);
   }
   function loadTentToUI(i) {
     const t = tents[i];
     const monitorColor = 'var(--accent)';
-    ['tempVal','humVal','ppfdVal','co2LevelVal','leafOffsetInput'].forEach(id => {
+    ['tempVal','humVal','ppfdVal','co2LevelVal','leafOffsetInput',
+     'phInput','ecInput','runoffEcInput','waterTempInput'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.color = monitorColor;
     });
+    // 給水フォームをこのテントの前回値で復元
+    const lf = t.lastFeeding || {};
+    const _setFeed = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+    _setFeed('phInput',       lf.ph);
+    _setFeed('ecInput',       lf.ec);
+    _setFeed('runoffEcInput', lf.runoffEc);
+    _setFeed('waterTempInput',lf.waterTemp);
+    // modeInputCache もこのテントの値に同期
+    modeInputCache[spotMode] = {
+      ph: lf.ph ?? '', ec: lf.ec ?? '', runoffEc: lf.runoffEc ?? '', waterTemp: lf.waterTemp ?? ''
+    };
     document.getElementById('tempVal').value = useFahrenheit ? Math.round(t.temp * 9/5 + 32) : Math.round(t.temp);
     document.getElementById('humVal').value  = Math.round(t.hum);
     const leafOff = (t.leafOffset !== undefined && t.leafOffset !== null) ? t.leafOffset : -2.0;
@@ -1552,7 +1586,8 @@
     modeInputCache[spotMode] = {
       ph: document.getElementById('phInput')?.value ?? '',
       ec: document.getElementById('ecInput')?.value ?? '',
-      runoffEc: document.getElementById('runoffEcInput')?.value ?? ''
+      runoffEc: document.getElementById('runoffEcInput')?.value ?? '',
+      waterTemp: document.getElementById('waterTempInput')?.value ?? ''
     };
   }
 
@@ -1561,13 +1596,15 @@
     const ph = document.getElementById('phInput');
     const ec = document.getElementById('ecInput');
     const runoff = document.getElementById('runoffEcInput');
+    const wt = document.getElementById('waterTempInput');
     const _s = stages[tents[currentTent]?.stage];
     const _defEc = (_s && _s.ecInput && _s.ecInput[1] > 0) ? ((_s.ecInput[0] + _s.ecInput[1]) / 2).toFixed(1) : '1.2';
     const _defRo = (_s && _s.ecRunoff && _s.ecRunoff[1] > 0) ? ((_s.ecRunoff[0] + _s.ecRunoff[1]) / 2).toFixed(1) : '1.4';
-    const vals = cached || { ph: '6.0', ec: _defEc, runoffEc: _defRo };
+    const vals = cached || { ph: '6.0', ec: _defEc, runoffEc: _defRo, waterTemp: '' };
     if (ph) ph.value = vals.ph;
     if (ec) ec.value = vals.ec;
     if (runoff) runoff.value = vals.runoffEc;
+    if (wt) wt.value = vals.waterTemp;
   }
 
   function setSpotMode(mode) {
@@ -2345,14 +2382,21 @@
       ph: document.getElementById('phInput')?.value || null,
       ec: document.getElementById('ecInput')?.value || null,
       runoffEc: document.getElementById('runoffEcInput')?.value || null,
+      waterTemp: document.getElementById('waterTempInput')?.value || null,
       ppfd: String(t.ppfd || ''),
       note: (document.getElementById('feedingNoteInput')?.value || '').trim(),
       photo: pendingPhoto,
       fertilizers: (t.fertilizerList || []).filter(f => f.name || f.amountMl)
     };
     t.logs.push(log.id);
+    // Save後も入力値をテントに紐付けて保持（タブ切替後も残る）
+    t.lastFeeding = {
+      ph: log.ph || '', ec: log.ec || '',
+      runoffEc: log.runoffEc || '', waterTemp: log.waterTemp || ''
+    };
     await dbPut('logs', log);
     await dbPut('tents', t);
+    saveModeInputs(); // modeInputCache を最新値に同期
     const feedNoteEl = document.getElementById('feedingNoteInput');
     if (feedNoteEl) feedNoteEl.value = '';
     clearPhoto();
@@ -2363,6 +2407,7 @@
       stages[log.stage] ? `🌱 ${stages[log.stage].name}` : '',
       `🌡 Temp: ${log.temp}°C　💧 Humidity: ${log.hum}%`,
       log.ph ? `💧 pH: ${log.ph}` : '',
+      log.waterTemp ? `🌡 Water: ${log.waterTemp}°C` : '',
       log.ec ? `⚡ Input EC: ${log.ec} mS${log.runoffEc ? '　🔄 Runoff: ' + log.runoffEc + ' mS' : ''}` : '',
       fertNames ? `🌿 ${fertNames}` : ''
     ].filter(Boolean));
@@ -2412,6 +2457,13 @@
     let val = parseFloat(input.value || input.placeholder || '0');
     if (isNaN(val)) val = 0;
     val = Math.max(0, Math.round((val + delta) * 10) / 10);
+    input.value = val.toFixed(1);
+  }
+  function adjustWaterTemp(delta) {
+    const input = document.getElementById('waterTempInput');
+    let val = parseFloat(input.value || input.placeholder || '20');
+    if (isNaN(val)) val = 20;
+    val = Math.max(0, Math.min(40, Math.round((val + delta) * 10) / 10));
     input.value = val.toFixed(1);
   }
 
@@ -2692,7 +2744,7 @@ function classifyVpd(vpd, lo, hi) {
             const isMonitor = l.type === 'monitor';
             const details = isMonitor
               ? [l.temp ? `${Math.round(l.temp * 10) / 10}°C` : '', l.hum ? `${Math.round(l.hum)}%` : '', l.leafVpd ? `VPD ${l.leafVpd}` : '', l.ppfd ? `PPFD ${l.ppfd}` : ''].filter(Boolean).join('　')
-              : [l.ph ? `pH ${l.ph}` : '', l.ec ? `EC ${l.ec}` : '', l.runoffEc ? `→${l.runoffEc}` : ''].filter(Boolean).join('　');
+              : [l.ph ? `pH ${l.ph}` : '', l.waterTemp ? `💧${l.waterTemp}°C` : '', l.ec ? `EC ${l.ec}` : '', l.runoffEc ? `→${l.runoffEc}` : ''].filter(Boolean).join('　');
             const label = isMonitor ? '📊' : '💧';
             const fertTags = !isMonitor && l.fertilizers && l.fertilizers.length
               ? `<div style="display:flex;justify-content:flex-end;opacity:1;font-size:0.72rem;color:var(--text);margin-top:0;padding-right:0;width:100%;box-sizing:border-box;">${(l.fertilizers).map(f => `${esc(f.name) || '?'}${f.amountMl ? ' ' + f.amountMl + 'ml' : ''}`).join('　')}</div>`
@@ -2791,6 +2843,7 @@ function classifyVpd(vpd, lo, hi) {
         rows += row('💨 CO₂',    'el_co2val',  log.co2val,  'ppm');
     } else if (!isPhotoOnly) {
       rows += row('💧 pH',       'el_ph',       log.ph,       '');
+      rows += row('🌡 Water Temp','el_waterTemp', log.waterTemp,'°C', '0.5');
       rows += row('⚡ EC',        'el_ec',       log.ec,       'mS');
       rows += row('🔄 Runoff',   'el_runoffEc', log.runoffEc, 'mS');
       if (log.fertilizers && log.fertilizers.length) {
@@ -2841,7 +2894,8 @@ function classifyVpd(vpd, lo, hi) {
     } else {
       if (document.getElementById('el_ph'))       log.ph       = vv('el_ph')       || null;
       if (document.getElementById('el_ec'))       log.ec       = vv('el_ec')       || null;
-      if (document.getElementById('el_runoffEc')) log.runoffEc = vv('el_runoffEc') || null;
+      if (document.getElementById('el_runoffEc'))  log.runoffEc  = vv('el_runoffEc')  || null;
+      if (document.getElementById('el_waterTemp')) log.waterTemp = vv('el_waterTemp') || null;
       if (log.fertilizers && log.fertilizers.length) {
         log.fertilizers = log.fertilizers.map((f, i) => ({
           ...f,
