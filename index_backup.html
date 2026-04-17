@@ -1941,9 +1941,10 @@
   async function saveFeedingSpot() {
     const t = tents[currentTent];
     if (!t.stageSpots) t.stageSpots = {};
-    const ph = parseFloat(document.getElementById('phInput').value);
-    const ec = parseFloat(document.getElementById('ecInput').value);
-    const runoffEc = parseFloat(document.getElementById('runoffEcInput').value);
+    const _fv = id => { const el = document.getElementById(id); return el ? (el.value.trim() || el.placeholder || '') : ''; };
+    const ph = parseFloat(_fv('phInput'));
+    const ec = parseFloat(_fv('ecInput'));
+    const runoffEc = parseFloat(_fv('runoffEcInput'));
     const spot = t.stageSpots[t.stage] || {};
     if (!isNaN(ph)) spot.ph = ph;
     if (!isNaN(ec)) spot.ec = ec;
@@ -2453,10 +2454,10 @@
       leaf: t.leaf,
       co2: t.co2,
       leafOffset: t.leafOffset,
-      ph: document.getElementById('phInput')?.value || null,
-      ec: document.getElementById('ecInput')?.value || null,
-      runoffEc: document.getElementById('runoffEcInput')?.value || null,
-      waterTemp: document.getElementById('waterTempInput')?.value || null,
+      ph: (el => el?.value.trim() || el?.placeholder || null)(document.getElementById('phInput')),
+      ec: (el => el?.value.trim() || el?.placeholder || null)(document.getElementById('ecInput')),
+      runoffEc: (el => el?.value.trim() || el?.placeholder || null)(document.getElementById('runoffEcInput')),
+      waterTemp: (el => el?.value.trim() || el?.placeholder || null)(document.getElementById('waterTempInput')),
       ppfd: String(t.ppfd || ''),
       note: (document.getElementById('feedingNoteInput')?.value || '').trim(),
       photo: pendingPhoto,
