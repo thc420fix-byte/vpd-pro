@@ -2909,6 +2909,17 @@ function classifyVpd(vpd, lo, hi) {
        </div>`;
 
     let rows = '';
+    // 日時編集
+    const _d = new Date(log.ts || Date.parse(log.timestamp) || Date.now());
+    const _pad = n => String(n).padStart(2,'0');
+    const _dateStr = `${_d.getFullYear()}-${_pad(_d.getMonth()+1)}-${_pad(_d.getDate())}`;
+    const _timeStr = `${_pad(_d.getHours())}:${_pad(_d.getMinutes())}`;
+    rows += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <input id="el_date" type="date" value="${_dateStr}"
+             style="background:transparent;border:none;border-bottom:1px solid var(--muted);color:var(--accent);font-size:0.9rem;outline:none;padding:4px 0;font-family:inherit;">
+      <input id="el_time" type="time" value="${_timeStr}"
+             style="background:transparent;border:none;border-bottom:1px solid var(--muted);color:var(--accent);font-size:0.9rem;outline:none;padding:4px 0;font-family:inherit;">
+    </div>`;
     if (isMonitor) {
       rows += row('🌡 Temp',     'el_temp',    log.temp,    '°C');
       rows += row('💧 Humidity', 'el_hum',     log.hum,     '%');
@@ -2980,6 +2991,16 @@ function classifyVpd(vpd, lo, hi) {
       }
     }
     log.note = (vv('el_note') || '').trim();
+    // 日時更新
+    const _newDate = vv('el_date');
+    const _newTime = vv('el_time');
+    if (_newDate && _newTime) {
+      const _dt = new Date(`${_newDate}T${_newTime}`);
+      if (!isNaN(_dt.getTime())) {
+        log.ts = _dt.getTime();
+        log.timestamp = _dt.toLocaleString('ja-JP');
+      }
+    }
     if (_editDeletePhoto) log.photo = null;
 
     await dbPut('logs', log);
