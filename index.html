@@ -130,6 +130,9 @@
       flex: 1 0 auto;
       min-width: 56px;
       max-width: 90px;
+    }
+    .tent-btn.solo {
+      max-width: none;
       padding: 10px 6px;
       background: var(--surface);
       border: none;
@@ -1106,7 +1109,7 @@
     bar.innerHTML = '';
     tents.forEach((t,i) => {
       const btn = document.createElement('div');
-      btn.className = 'tent-btn' + (i === currentTent ? ' active' : '');
+      btn.className = 'tent-btn' + (i === currentTent ? ' active' : '') + (tents.length === 1 ? ' solo' : '');
       btn.textContent = t.name;
       if (i > 0) btn.style.borderLeft = '1px solid var(--border)';
       btn.onclick = () => {
