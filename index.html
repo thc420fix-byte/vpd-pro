@@ -783,7 +783,7 @@
         <button class="small-btn" onclick="adjustWaterTemp(-0.5)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">−</button>
         <div style="display:flex;align-items:baseline;gap:5px;width:210px;justify-content:center;">
           <span style="font-size:1.1rem;color:var(--text);font-weight:500;min-width:80px;text-align:right;">Water Temp</span>
-          <input id="waterTempInput" type="text" inputmode="decimal" placeholder="20.0" onfocus="this.select()" style="width:52px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
+          <input id="waterTempInput" type="text" inputmode="numeric" placeholder="20" onfocus="this.select()" style="width:52px;font-size:1.6rem;font-weight:700;background:transparent;color:var(--accent);border:none;outline:none;text-align:center;">
           <span style="font-size:1.1rem;color:var(--text);min-width:45px;">°C</span>
         </div>
         <button class="small-btn" onclick="adjustWaterTemp(0.5)" style="width:36px;height:36px;font-size:1.2rem;flex-shrink:0;">+</button>
@@ -2919,7 +2919,7 @@ function classifyVpd(vpd, lo, hi) {
         rows += row('💨 CO₂',    'el_co2val',  log.co2val,  'ppm');
     } else if (!isPhotoOnly) {
       rows += row('💧 pH',       'el_ph',       log.ph,       '');
-      rows += row('🌡 Water Temp','el_waterTemp', log.waterTemp,'°C', '0.5');
+      rows += row('🌡 Water Temp','el_waterTemp', log.waterTemp,'°C', '1');
       rows += row('⚡ EC',        'el_ec',       log.ec,       'mS');
       rows += row('🔄 Runoff',   'el_runoffEc', log.runoffEc, 'mS');
       if (log.fertilizers && log.fertilizers.length) {
