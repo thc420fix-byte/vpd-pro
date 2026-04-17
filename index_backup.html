@@ -365,6 +365,11 @@
       font-size: 1.6rem;
       color: #fff;
       cursor: pointer;
+      z-index: 10;
+      background: none;
+      border: none;
+      padding: 8px;
+      line-height: 1;
     }
     .toast {
       position: fixed;
@@ -794,15 +799,27 @@
   </div>
 </div>
 
+<!-- ログ編集モーダル -->
+<div id="editLogModal" role="dialog" aria-modal="true" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:20px;width:86%;max-width:360px;max-height:85vh;overflow-y:auto;">
+    <div style="font-size:0.9rem;color:var(--accent);margin-bottom:14px;letter-spacing:0.05em;font-weight:700;">EDIT LOG</div>
+    <div id="editLogBody"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button onclick="confirmEditLog()" style="flex:2;padding:10px;background:var(--accent);color:#000;border:none;border-radius:6px;font-weight:700;font-size:0.9rem;cursor:pointer;">OK</button>
+      <button onclick="closeEditLogModal()" style="flex:1;padding:10px;background:transparent;color:var(--text);border:1px solid var(--muted);border-radius:6px;font-size:0.9rem;cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Hidden file inputs for camera/library -->
   <input type="file" accept="image/*" capture="environment" id="photoCamera" style="display:none" onchange="handlePhoto(event)">
   <input type="file" accept="image/*" id="photoFile" style="display:none" onchange="handlePhoto(event)">
 
 
   <!-- 写真比較オーバーレイ -->
-  <div class="photo-overlay" id="photoOverlay">
-    <span class="overlay-close" onclick="closeOverlay()">✕</span>
-    <img id="overlayImg" src="" alt="Grow photo">
+  <div class="photo-overlay" id="photoOverlay" onclick="closeOverlay()">
+    <button class="overlay-close" onclick="closeOverlay()">✕</button>
+    <img id="overlayImg" src="" alt="Grow photo" onclick="event.stopPropagation()">
   </div>
 
   <script>
@@ -1615,6 +1632,7 @@
 
 
   let currentFertTab = 0;
+  const _fertLastTap = {};  // renderFertilizerTabs再作成でもリセットされないよう外部管理
 
   function renderFertilizerTabs() {
     const bar = document.getElementById('fertTabBar');
@@ -1633,7 +1651,7 @@
     bar.innerHTML = list.map((f, i) => {
       const label = f.name || `NUTRIENT${i + 1}`;
       const active = i === currentFertTab;
-      return `<div class="toggle-btn${active ? ' active-day' : ''}" data-index="${i}" onclick="selectFertTab(${i})" ondblclick="selectFertilizerTabAndEdit(${i})" style="white-space:nowrap;outline:none;">${label}</div>`;
+      return `<div class="toggle-btn fert-tab-btn${active ? ' active-day' : ''}" data-index="${i}" onclick="(function(){var now=Date.now();if(_fertLastTap[${i}]&&now-_fertLastTap[${i}]<350){_fertLastTap[${i}]=0;selectFertilizerTabAndEdit(${i});}else{_fertLastTap[${i}]=now;selectFertTab(${i});}})()" style="white-space:nowrap;outline:none;">${label}</div>`;
     }).join('');
 
     // タブコンテンツ
@@ -2697,9 +2715,9 @@ function classifyVpd(vpd, lo, hi) {
               const d = getLogDate(l);
               const dateLabel = `${d.getMonth()+1}/${d.getDate()}`;
               const timeLabel = `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
-              const pNoteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${l.note.replace(/</g,'&lt;')}</div>` : '';
+              const pNoteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${esc(l.note)}</div>` : '';
               const pLogId = String(l.id).replace(/'/g, "\\'");
-              return `<div class="slog-item" onclick="event.stopPropagation();editLogNote('${pLogId}')" style="${hidden ? 'display:none;' : ''}cursor:pointer;">
+              return `<div class="slog-item" onclick="event.stopPropagation();editLog('${pLogId}')" style="${hidden ? 'display:none;' : ''}cursor:pointer;">
                 <div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:var(--text);">
                   <div style="display:flex;align-items:center;gap:8px;">
                     <span style="opacity:0.85;white-space:nowrap;">${dateLabel} 📷 ${timeLabel}</span>
@@ -2719,12 +2737,12 @@ function classifyVpd(vpd, lo, hi) {
               ? `<div style="display:flex;justify-content:flex-end;opacity:1;font-size:0.72rem;color:var(--text);margin-top:0;padding-right:0;width:100%;box-sizing:border-box;">${(l.fertilizers).map(f => `${esc(f.name) || '?'}${f.amountMl ? ' ' + f.amountMl + 'ml' : ''}`).join('　')}</div>`
               : '';
             const photoThumb = l.photo ? `<div style="margin-top:3px;"><img src="${l.photo}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="(()=>{document.getElementById('overlayImg').src=this.src;document.getElementById('photoOverlay').style.display='flex';})()"></div>` : '';
-            const noteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${l.note.replace(/</g,'&lt;')}</div>` : '';
+            const noteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${esc(l.note)}</div>` : '';
             const logId = String(l.id).replace(/'/g, "\\'");
             return `<div class="slog-item"
                 ondblclick="(async()=>{if(this._nt){clearTimeout(this._nt);this._nt=null;}if(await customConfirm(tr('confirm.delete_log')))deleteStageLog('${logId}','${key}')})()"
-                ontouchend="(function(el){var now=Date.now();if(el._dt&&now-el._dt<400){el._dt=null;if(el._nt){clearTimeout(el._nt);el._nt=null;}(async()=>{if(await customConfirm(tr('confirm.delete_log')))deleteStageLog('${logId}','${key}')})()}else{el._dt=now;el._nt=setTimeout(function(){el._nt=null;editLogNote('${logId}')},450)}})(this)"
-                onclick="event.stopPropagation();(function(el){if(el._nt)return;el._nt=setTimeout(function(){el._nt=null;editLogNote('${logId}')},300)})(this)"
+                ontouchend="(function(el){var now=Date.now();if(el._dt&&now-el._dt<400){el._dt=null;if(el._nt){clearTimeout(el._nt);el._nt=null;}(async()=>{if(await customConfirm(tr('confirm.delete_log')))deleteStageLog('${logId}','${key}')})()}else{el._dt=now;el._nt=setTimeout(function(){el._nt=null;editLog('${logId}')},450)}})(this)"
+                onclick="event.stopPropagation();(function(el){if(el._nt)return;el._nt=setTimeout(function(){el._nt=null;editLog('${logId}')},300)})(this)"
                 style="${hidden ? 'display:none;' : ''}padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:var(--text);cursor:pointer;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="opacity:0.85;white-space:nowrap;margin-right:6px;">${fmtTsParts(l.timestamp).date} ${label} ${fmtTsParts(l.timestamp).time}</span>
@@ -2777,15 +2795,106 @@ function classifyVpd(vpd, lo, hi) {
     });
     window.scrollTo(0, scrollY);
   }
-  async function editLogNote(id) {
+  /* === ログ編集（分析画面から全フィールドを編集可能に） === */
+  let _editingLogId = null;
+  let _editDeletePhoto = false;
+
+  async function editLog(id) {
     const dbKey = /^\d+$/.test(id) ? Number(id) : id;
     const log = await dbGet('logs', dbKey);
     if (!log) return;
-    const current = log.note || '';
-    const input = prompt('📝 メモを入力', current);
-    if (input === null) return;
-    log.note = input.trim();
+    _editingLogId = dbKey;
+    _editDeletePhoto = false;
+
+    const body = document.getElementById('editLogBody');
+    const isMonitor = log.type === 'monitor';
+    const isPhotoOnly = log.photo && !isMonitor
+      && (!log.fertilizers || !log.fertilizers.length)
+      && !log.ph && !log.ec;
+
+    const row = (label, fid, val, unit, step='any') =>
+      `<div style="display:grid;grid-template-columns:96px 1fr 36px;gap:8px;align-items:center;margin-bottom:8px;">
+         <label style="font-size:0.75rem;color:var(--text);">${label}</label>
+         <input id="${fid}" type="number" step="${step}" value="${val ?? ''}"
+                style="background:transparent;border:none;border-bottom:1px solid var(--muted);color:var(--accent);font-size:0.95rem;outline:none;padding:4px 0;">
+         <span style="font-size:0.7rem;color:var(--text);opacity:0.7;">${unit}</span>
+       </div>`;
+
+    let rows = '';
+    if (isMonitor) {
+      rows += row('🌡 Temp',     'el_temp',    log.temp,    '°C');
+      rows += row('💧 Humidity', 'el_hum',     log.hum,     '%');
+      rows += row('🌿 Leaf VPD', 'el_leafVpd', log.leafVpd, 'kPa');
+      rows += row('💡 PPFD',     'el_ppfd',    log.ppfd,    'µmol');
+      if (log.co2val || tents[currentTent]?.co2)
+        rows += row('💨 CO₂',    'el_co2val',  log.co2val,  'ppm');
+    } else if (!isPhotoOnly) {
+      rows += row('💧 pH',       'el_ph',       log.ph,       '');
+      rows += row('⚡ EC',        'el_ec',       log.ec,       'mS');
+      rows += row('🔄 Runoff',   'el_runoffEc', log.runoffEc, 'mS');
+      if (log.fertilizers && log.fertilizers.length) {
+        rows += '<div style="font-size:0.7rem;color:var(--text);opacity:0.8;margin:10px 0 4px;">🌿 Fertilizers</div>';
+        log.fertilizers.forEach((f, i) => {
+          rows += `<div style="display:grid;grid-template-columns:1fr 70px 30px;gap:6px;align-items:center;margin-bottom:6px;">
+            <input id="el_fert_name_${i}" value="${esc(f.name || '')}" maxlength="24"
+                   style="background:transparent;border:none;border-bottom:1px solid var(--muted);color:var(--accent);font-size:0.85rem;outline:none;padding:3px 0;">
+            <input id="el_fert_amt_${i}" type="number" step="0.5" value="${f.amountMl || ''}"
+                   style="background:transparent;border:none;border-bottom:1px solid var(--muted);color:var(--accent);font-size:0.85rem;outline:none;padding:3px 0;text-align:right;">
+            <span style="font-size:0.65rem;color:var(--text);opacity:0.7;">ml</span>
+          </div>`;
+        });
+      }
+    }
+
+    rows += `<div style="margin-top:10px;">
+      <label style="font-size:0.75rem;color:var(--text);">📝 Note</label>
+      <textarea id="el_note" rows="2" maxlength="200"
+                style="width:100%;box-sizing:border-box;margin-top:4px;background:transparent;border:1px solid var(--muted);border-radius:6px;color:var(--text);font-size:0.85rem;padding:6px;outline:none;resize:none;font-family:inherit;">${esc(log.note || '')}</textarea>
+    </div>`;
+
+    if (log.photo) {
+      rows += `<div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+        <img src="${log.photo}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;">
+        <button type="button" onclick="_editDeletePhoto=true;this.textContent='🗑 Deleted';this.disabled=true;this.style.opacity='0.5';"
+                style="background:transparent;border:1px solid rgba(255,100,100,0.6);border-radius:6px;color:rgba(255,120,120,0.9);font-size:0.75rem;padding:4px 10px;cursor:pointer;">🗑 Delete Photo</button>
+      </div>`;
+    }
+
+    body.innerHTML = rows;
+    document.getElementById('editLogModal').style.display = 'flex';
+  }
+
+  async function confirmEditLog() {
+    if (_editingLogId == null) { closeEditLogModal(); return; }
+    const log = await dbGet('logs', _editingLogId);
+    if (!log) { closeEditLogModal(); return; }
+    const vv  = fid => document.getElementById(fid)?.value ?? '';
+    const num = fid => { const x = parseFloat(vv(fid)); return isNaN(x) ? null : x; };
+
+    if (log.type === 'monitor') {
+      if (document.getElementById('el_temp'))    log.temp    = num('el_temp')    ?? log.temp;
+      if (document.getElementById('el_hum'))     log.hum     = num('el_hum')     ?? log.hum;
+      if (document.getElementById('el_leafVpd')) log.leafVpd = num('el_leafVpd') ?? log.leafVpd;
+      if (document.getElementById('el_ppfd'))    log.ppfd    = num('el_ppfd')    ?? log.ppfd;
+      if (document.getElementById('el_co2val'))  log.co2val  = num('el_co2val')  ?? log.co2val;
+    } else {
+      if (document.getElementById('el_ph'))       log.ph       = vv('el_ph')       || null;
+      if (document.getElementById('el_ec'))       log.ec       = vv('el_ec')       || null;
+      if (document.getElementById('el_runoffEc')) log.runoffEc = vv('el_runoffEc') || null;
+      if (log.fertilizers && log.fertilizers.length) {
+        log.fertilizers = log.fertilizers.map((f, i) => ({
+          ...f,
+          name:     (vv(`el_fert_name_${i}`) || '').trim() || f.name,
+          amountMl: num(`el_fert_amt_${i}`) ?? f.amountMl
+        }));
+      }
+    }
+    log.note = (vv('el_note') || '').trim();
+    if (_editDeletePhoto) log.photo = null;
+
     await dbPut('logs', log);
+    closeEditLogModal();
+
     const openStages = Array.from(document.querySelectorAll('[id^="slog-"]'))
       .filter(el => el.style.display !== 'none').map(el => el.id);
     const scrollY = window.scrollY;
@@ -2799,6 +2908,13 @@ function classifyVpd(vpd, lo, hi) {
     });
     window.scrollTo(0, scrollY);
   }
+
+  function closeEditLogModal() {
+    document.getElementById('editLogModal').style.display = 'none';
+    _editingLogId = null;
+    _editDeletePhoto = false;
+  }
+
   function toggleStageLog(bodyId, iconId) {
     const el = document.getElementById(bodyId);
     const ic = document.getElementById(iconId);
@@ -2984,7 +3100,10 @@ function classifyVpd(vpd, lo, hi) {
     document.addEventListener('touchend', (e) => {
       const now = Date.now();
       if (now - lastTouchEnd <= 350) {
-        e.preventDefault();
+        // tent-btn / fert-tab-btn は独自ダブルタップで名前変更するため除外
+        if (!e.target.closest('.tent-btn') && !e.target.closest('.fert-tab-btn')) {
+          e.preventDefault();
+        }
       }
       lastTouchEnd = now;
     }, { passive: false });
