@@ -431,10 +431,74 @@
 .spot-delta.on  { color:var(--accent); }
 .spot-delta.off { color:#ff8866; }
 
+/* === PIN Lock === */
+#pinOverlay {
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;
+  background:var(--bg,#090d0b);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+}
+#blankScreen {
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:10001;
+  background:var(--bg,#090d0b);display:none;
+}
+.pin-dots { display:flex;gap:18px; }
+.pin-dot {
+  width:15px;height:15px;border-radius:50%;
+  border:2px solid var(--accent);background:transparent;
+  transition:background 0.12s;
+}
+.pin-dot.filled { background:var(--accent); }
+.pin-keypad {
+  display:grid;grid-template-columns:repeat(3,72px);gap:12px;
+}
+.pin-key {
+  width:72px;height:72px;border-radius:50%;
+  background:rgba(0,255,136,0.07);border:1.5px solid rgba(0,255,136,0.22);
+  color:var(--text);font-size:1.45rem;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;
+  transition:background 0.1s,transform 0.08s;
+}
+.pin-key:active { background:rgba(0,255,136,0.22);transform:scale(0.93); }
+@keyframes pinShake {
+  0%,100%{transform:translateX(0)}
+  18%{transform:translateX(-9px)} 36%{transform:translateX(9px)}
+  54%{transform:translateX(-6px)} 72%{transform:translateX(6px)}
+}
+.pin-shake { animation:pinShake 0.38s ease; }
 
 </style>
 </head>
 <body>
+  <!-- ===== PIN Lock Overlay ===== -->
+  <div id="pinOverlay" style="display:none;">
+    <div style="font-size:1.4rem;font-weight:700;color:var(--accent);letter-spacing:0.15em;">VPD PRO</div>
+    <div id="pinMessage" style="font-size:0.88rem;color:var(--text);opacity:0.75;min-height:20px;text-align:center;"></div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <div class="pin-key" onclick="pinPress('1')">1</div>
+      <div class="pin-key" onclick="pinPress('2')">2</div>
+      <div class="pin-key" onclick="pinPress('3')">3</div>
+      <div class="pin-key" onclick="pinPress('4')">4</div>
+      <div class="pin-key" onclick="pinPress('5')">5</div>
+      <div class="pin-key" onclick="pinPress('6')">6</div>
+      <div class="pin-key" onclick="pinPress('7')">7</div>
+      <div class="pin-key" onclick="pinPress('8')">8</div>
+      <div class="pin-key" onclick="pinPress('9')">9</div>
+      <div class="pin-key" style="visibility:hidden;pointer-events:none;"></div>
+      <div class="pin-key" onclick="pinPress('0')">0</div>
+      <div class="pin-key" onclick="pinDelete()" style="font-size:1.1rem;">⌫</div>
+    </div>
+    <div id="pinFailInfo" style="font-size:0.73rem;color:var(--danger);min-height:18px;text-align:center;"></div>
+  </div>
+  <!-- ===== Blank / Lockout Screen ===== -->
+  <div id="blankScreen"></div>
+
   <button id="settingsToggle" onclick="openSettings()" aria-label="Settings">⚙️</button>
   <!-- Settings Modal -->
   <div id="settingsModal" role="dialog" aria-modal="true" onclick="closeSettings(event)">
@@ -472,6 +536,18 @@
       <div style="font-size:0.7rem;font-weight:700;color:var(--accent);opacity:0.8;letter-spacing:0.1em;margin-bottom:10px;">DATA</div>
       <button class="small-btn" style="width:100%;margin-bottom:8px;border-color:var(--danger);color:var(--danger);font-size:0.78rem;" onclick="clearLogs()">🗑 CLEAR LOG</button>
       <button class="small-btn" style="width:100%;border-color:var(--danger);color:var(--danger);font-size:0.78rem;" onclick="eraseAllData()">🗑 ERASE ALL</button>
+      <div style="border-top:1px solid var(--border);margin:16px 0;"></div>
+      <!-- セキュリティ -->
+      <div style="font-size:0.7rem;font-weight:700;color:var(--accent);opacity:0.8;letter-spacing:0.1em;margin-bottom:10px;">SECURITY</div>
+      <button id="pinSetupBtn" class="small-btn" style="width:100%;margin-bottom:8px;font-size:0.78rem;" onclick="setupPin()">🔒 SET PIN</button>
+      <button id="pinRemoveBtn" class="small-btn" style="width:100%;display:none;border-color:var(--danger);color:var(--danger);font-size:0.78rem;" onclick="removePin()">🗑 REMOVE PIN</button>
+      <!-- 侵入者写真 -->
+      <div id="intruderSection" style="display:none;margin-top:12px;">
+        <div style="font-size:0.68rem;color:var(--danger);font-weight:700;margin-bottom:6px;">⚠ UNAUTHORIZED ACCESS DETECTED</div>
+        <div id="intruderTime" style="font-size:0.68rem;color:var(--text-dim);margin-bottom:6px;"></div>
+        <img id="intruderImg" src="" style="width:100%;border-radius:8px;border:1px solid var(--danger);" />
+        <button class="small-btn" style="width:100%;margin-top:8px;font-size:0.75rem;border-color:var(--danger);color:var(--danger);" onclick="clearIntruderPhoto()">🗑 CLEAR PHOTO</button>
+      </div>
       <div style="border-top:1px solid var(--border);margin:16px 0;"></div>
       <div style="font-size:0.7rem;font-weight:700;color:var(--accent);opacity:0.8;letter-spacing:0.1em;margin-bottom:10px;">MY SPOT TOLERANCE</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -2961,6 +3037,218 @@ function classifyVpd(vpd, lo, hi) {
     window.scrollTo(0, scrollY);
   }
 
+  /* === PIN Lock System === */
+  const _PIN_KEY    = 'vpdPin';
+  const _PIN_FAILS  = 'vpdPinFails';
+  const _PIN_LOCKED = 'vpdPinLocked';
+  const _PIN_MAX    = 3;
+  let _pinBuf  = '';
+  let _pinMode = '';   // unlock | setup1 | setup2 | change1 | change2 | change3 | remove1
+  let _pinTmp  = '';
+
+  const _pinEncode  = p  => btoa('vpd:' + p);
+  const _pinCheck   = p  => btoa('vpd:' + p) === localStorage.getItem(_PIN_KEY);
+  const _pinIsSet   = () => !!localStorage.getItem(_PIN_KEY);
+  const _pinFails   = () => parseInt(localStorage.getItem(_PIN_FAILS) || '0', 10);
+  const _pinLocked  = () => localStorage.getItem(_PIN_LOCKED) === 'true';
+
+  function pinInitCheck() {
+    if (_pinLocked())  { _showBlankScreen(); return; }
+    if (_pinIsSet())   { _showPinOverlay('unlock'); }
+  }
+
+  function _showPinOverlay(mode) {
+    _pinBuf = ''; _pinMode = mode;
+    // フロー開始時のみリセット（途中遷移では _pinTmp を保持する）
+    if (['setup1','change1','unlock','remove1'].includes(mode)) _pinTmp = '';
+    _updatePinDots();
+    const msg = document.getElementById('pinMessage');
+    const fi  = document.getElementById('pinFailInfo');
+    fi.textContent = '';
+    const labels = {
+      unlock:  'Enter PIN',
+      setup1:  'Set new PIN',
+      setup2:  'Confirm PIN',
+      change1: 'Current PIN',
+      change2: 'New PIN',
+      change3: 'Confirm new PIN',
+      remove1: 'Enter PIN to remove'
+    };
+    msg.textContent = labels[mode] || '';
+    if (mode === 'unlock') {
+      const f = _pinFails();
+      if (f > 0) fi.textContent = `⚠ ${f} / ${_PIN_MAX} attempts`;
+    }
+    document.getElementById('pinOverlay').style.display = 'flex';
+  }
+
+  function _hidePinOverlay() {
+    document.getElementById('pinOverlay').style.display = 'none';
+    _pinBuf = '';
+  }
+
+  function _showBlankScreen() {
+    document.getElementById('blankScreen').style.display = 'block';
+  }
+
+  function _updatePinDots() {
+    for (let i = 0; i < 4; i++) {
+      const d = document.getElementById('pd' + i);
+      if (d) d.classList.toggle('filled', i < _pinBuf.length);
+    }
+  }
+
+  function pinPress(digit) {
+    if (_pinBuf.length >= 4) return;
+    _pinBuf += digit;
+    _updatePinDots();
+    if (_pinBuf.length === 4) setTimeout(_pinSubmit, 120);
+  }
+
+  function pinDelete() {
+    if (!_pinBuf.length) return;
+    _pinBuf = _pinBuf.slice(0, -1);
+    _updatePinDots();
+  }
+
+  function _pinSubmit() {
+    const buf = _pinBuf;
+    _pinBuf = ''; _updatePinDots();
+
+    if (_pinMode === 'unlock') {
+      if (_pinCheck(buf)) {
+        localStorage.setItem(_PIN_FAILS, '0');
+        _hidePinOverlay();
+        _updatePinSettingsUI();
+        if (localStorage.getItem('vpdIntruderPhoto')) {
+          setTimeout(() => showToast('⚠️ Wrong PIN attempt detected — check SECURITY settings'), 500);
+        }
+      } else {
+        const f = _pinFails() + 1;
+        localStorage.setItem(_PIN_FAILS, String(f));
+        if (f === 1) _pinCaptureIntruder();
+        if (f >= _PIN_MAX) {
+          localStorage.setItem(_PIN_LOCKED, 'true');
+          _hidePinOverlay();
+          _showBlankScreen();
+        } else {
+          document.getElementById('pinFailInfo').textContent = `⚠ ${f} / ${_PIN_MAX} attempts`;
+          _pinShake();
+        }
+      }
+    } else if (_pinMode === 'setup1') {
+      _pinTmp = buf;
+      _showPinOverlay('setup2');
+    } else if (_pinMode === 'setup2') {
+      if (buf === _pinTmp) {
+        localStorage.setItem(_PIN_KEY, _pinEncode(buf));
+        localStorage.setItem(_PIN_FAILS, '0');
+        _hidePinOverlay();
+        showToast('🔒 PIN set');
+        _updatePinSettingsUI();
+      } else {
+        document.getElementById('pinMessage').textContent = 'Mismatch — try again';
+        _pinShake();
+        setTimeout(() => _showPinOverlay('setup1'), 900);
+      }
+    } else if (_pinMode === 'change1') {
+      if (_pinCheck(buf)) {
+        _showPinOverlay('change2');
+      } else {
+        document.getElementById('pinMessage').textContent = 'Wrong PIN';
+        _pinShake();
+        setTimeout(() => _showPinOverlay('change1'), 900);
+      }
+    } else if (_pinMode === 'change2') {
+      _pinTmp = buf;
+      _showPinOverlay('change3');
+    } else if (_pinMode === 'change3') {
+      if (buf === _pinTmp) {
+        localStorage.setItem(_PIN_KEY, _pinEncode(buf));
+        _hidePinOverlay();
+        showToast('🔒 PIN updated');
+      } else {
+        document.getElementById('pinMessage').textContent = 'Mismatch — try again';
+        _pinShake();
+        setTimeout(() => _showPinOverlay('change2'), 900);
+      }
+    } else if (_pinMode === 'remove1') {
+      if (_pinCheck(buf)) {
+        localStorage.removeItem(_PIN_KEY);
+        localStorage.setItem(_PIN_FAILS, '0');
+        _hidePinOverlay();
+        showToast('🔓 PIN removed');
+        _updatePinSettingsUI();
+      } else {
+        document.getElementById('pinMessage').textContent = 'Wrong PIN';
+        _pinShake();
+        setTimeout(() => _showPinOverlay('remove1'), 900);
+      }
+    }
+  }
+
+  function _pinShake() {
+    const el = document.getElementById('pinDots');
+    el.classList.remove('pin-shake');
+    void el.offsetWidth;
+    el.classList.add('pin-shake');
+    el.addEventListener('animationend', () => el.classList.remove('pin-shake'), { once: true });
+  }
+
+  function setupPin() {
+    document.getElementById('settingsModal').classList.remove('open');
+    setTimeout(() => _showPinOverlay(_pinIsSet() ? 'change1' : 'setup1'), 200);
+  }
+
+  function removePin() {
+    document.getElementById('settingsModal').classList.remove('open');
+    setTimeout(() => _showPinOverlay('remove1'), 200);
+  }
+
+  async function _pinCaptureIntruder() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+      const video  = document.createElement('video');
+      video.srcObject = stream;
+      video.setAttribute('playsinline','');
+      await new Promise(r => { video.onloadedmetadata = r; video.play(); });
+      await new Promise(r => setTimeout(r, 600));
+      const canvas = document.createElement('canvas');
+      canvas.width  = video.videoWidth  || 320;
+      canvas.height = video.videoHeight || 240;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      stream.getTracks().forEach(t => t.stop());
+      localStorage.setItem('vpdIntruderPhoto', canvas.toDataURL('image/jpeg', 0.6));
+      localStorage.setItem('vpdIntruderTime',  new Date().toLocaleString('ja-JP'));
+    } catch(e) { /* カメラ拒否またはデバイス非対応 — 無視 */ }
+  }
+
+  function clearIntruderPhoto() {
+    localStorage.removeItem('vpdIntruderPhoto');
+    localStorage.removeItem('vpdIntruderTime');
+    const el = document.getElementById('intruderSection');
+    if (el) el.style.display = 'none';
+  }
+
+  function _updatePinSettingsUI() {
+    const setup  = document.getElementById('pinSetupBtn');
+    const remove = document.getElementById('pinRemoveBtn');
+    if (!setup) return;
+    const set = _pinIsSet();
+    setup.textContent = set ? '🔑 CHANGE PIN' : '🔒 SET PIN';
+    if (remove) remove.style.display = set ? '' : 'none';
+    const photo = localStorage.getItem('vpdIntruderPhoto');
+    const sec   = document.getElementById('intruderSection');
+    if (sec) {
+      sec.style.display = photo ? '' : 'none';
+      if (photo) {
+        document.getElementById('intruderImg').src = photo;
+        document.getElementById('intruderTime').textContent =
+          '📸 ' + (localStorage.getItem('vpdIntruderTime') || '');
+      }
+    }
+  }
+
   /* === 初期化 === */
   async function init() {
     await initDB();
@@ -3000,6 +3288,9 @@ function classifyVpd(vpd, lo, hi) {
     }
     // restore language
     applyLang();
+    // PIN lock check (must be last — overlays everything)
+    _updatePinSettingsUI();
+    pinInitCheck();
   }
   function updateThemeToggleUI(isLight) {
     const thumb = document.getElementById('themeThumb');
