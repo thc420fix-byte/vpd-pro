@@ -130,9 +130,6 @@
       flex: 1 0 auto;
       min-width: 56px;
       max-width: 90px;
-    }
-    .tent-btn.solo {
-      max-width: none;
       padding: 10px 6px;
       background: var(--surface);
       border: none;
@@ -142,6 +139,10 @@
       text-align: center;
       cursor: pointer;
       white-space: pre-line;
+      font-family: inherit;
+    }
+    .tent-btn.solo {
+      max-width: none;
     }
     .tent-btn:first-child { border-radius: 10px 0 0 10px; }
     .tent-btn:last-child  { border-radius: 0 10px 10px 0; }
@@ -482,18 +483,18 @@
       <div class="pin-dot" id="pd3"></div>
     </div>
     <div class="pin-keypad">
-      <div class="pin-key" onclick="pinPress('1')">1</div>
-      <div class="pin-key" onclick="pinPress('2')">2</div>
-      <div class="pin-key" onclick="pinPress('3')">3</div>
-      <div class="pin-key" onclick="pinPress('4')">4</div>
-      <div class="pin-key" onclick="pinPress('5')">5</div>
-      <div class="pin-key" onclick="pinPress('6')">6</div>
-      <div class="pin-key" onclick="pinPress('7')">7</div>
-      <div class="pin-key" onclick="pinPress('8')">8</div>
-      <div class="pin-key" onclick="pinPress('9')">9</div>
-      <div class="pin-key" style="visibility:hidden;pointer-events:none;"></div>
-      <div class="pin-key" onclick="pinPress('0')">0</div>
-      <div class="pin-key" onclick="pinDelete()" style="font-size:1.1rem;">⌫</div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key pin-digit"></div>
+      <div class="pin-key" data-pin-del="1" onclick="pinDelete()" style="font-size:1.1rem;">⌫</div>
     </div>
     <div id="pinFailInfo" style="font-size:0.73rem;color:var(--danger);min-height:18px;text-align:center;"></div>
   </div>
@@ -567,7 +568,7 @@
   </div>
   <h1>VPD PRO</h1>
   <div class="subtitle">Grow Environment Monitor</div>
-  <div id="offlineBanner" style="display:none; background:rgba(255,51,51,0.12); border:1px solid var(--danger); color:var(--danger); text-align:center; font-size:0.75rem; font-weight:700; padding:6px; margin-bottom:8px; border-radius:8px;" data-i18n="offline.banner">オフライン中 — データはローカルに保存されます</div>
+
   <div class="tent-bar" id="tentBar"></div>
   <div class="tabs">
     <div class="tab active" data-tab="monitor" data-i18n="tab.monitor">📊 Monitor</div>
@@ -838,7 +839,7 @@
 <div class="tab-content" id="tab-analysis">
   <!-- ステージ進捗タイムライン -->
   <div class="card">
-    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:0;padding:4px 0;" onclick="(function(){var el=document.getElementById('stageTimeline');var ic=document.getElementById('stageToggleIcon');var open=el.style.display!=='none';el.style.display=open?'none':'';ic.textContent=open?'▶':'▼';})()">
+    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:0;padding:4px 0;" onclick="(function(){var el=document.getElementById('stageTimeline');el.style.display=el.style.display!=='none'?'none':'';})()">
       <span data-i18n="analysis.stage_progress" style="text-align:left;">ステージ進捗</span>
       <span style="display:flex;align-items:center;gap:8px;">
         <span style="display:flex;gap:6px;" onclick="event.stopPropagation()">
@@ -846,7 +847,6 @@
           <button onclick="triggerPhoto('library','gallery')" style="background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.45);border-radius:6px;color:var(--accent);font-size:0.75rem;padding:4px 8px;cursor:pointer;">🖼</button>
         </span>
         <span id="stageTotalDays" style="font-size:0.8rem;color:var(--accent);font-weight:700;"></span>
-        <span id="stageToggleIcon" style="font-size:0.7rem;color:var(--text);opacity:0.5;">▼</span>
       </span>
     </div>
     <div id="stageTimeline"></div>
@@ -881,9 +881,9 @@
 <!-- 肥料名変更モーダル -->
 <div id="renameFertilizerModal" role="dialog" aria-modal="true" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:24px;width:80%;max-width:320px;">
-    <div style="font-size:0.9rem;color:var(--text);margin-bottom:12px;">Rename Fertilizer</div>
-    <textarea id="renameFertilizerInput" maxlength="24" rows="2" style="width:100%;font-size:1.1rem;background:transparent;color:var(--accent);border:none;border-bottom:1px solid var(--accent);outline:none;padding:4px 0;box-sizing:border-box;resize:none;font-family:inherit;line-height:1.3;"></textarea>
-    <div style="display:flex;gap:8px;margin-top:16px;">
+    <div style="font-size:0.9rem;color:var(--text);margin-bottom:16px;">Rename Fertilizer</div>
+    <input id="renameFertilizerInput" type="text" maxlength="24" style="width:100%;font-size:1.1rem;background:transparent;color:var(--accent);border:none;border-bottom:1px solid var(--accent);outline:none;padding:6px 0 8px 0;box-sizing:border-box;font-family:inherit;">
+    <div style="display:flex;gap:8px;margin-top:20px;">
       <button onclick="confirmRenameFertilizer()" style="flex:2;padding:10px;background:var(--accent);color:#000;border:none;border-radius:6px;font-weight:700;font-size:0.9rem;cursor:pointer;">OK</button>
       <button onclick="closeRenameFertilizerModal()" style="flex:1;padding:10px;background:transparent;color:var(--text);border:1px solid var(--muted);border-radius:6px;font-size:0.9rem;cursor:pointer;">Cancel</button>
       <button onclick="removeFertilizer(_renameFertilizerIndex);closeRenameFertilizerModal();" style="padding:10px 12px;background:transparent;border:1px solid rgba(255,100,100,0.6);border-radius:6px;color:rgba(255,120,120,0.9);font-size:1rem;cursor:pointer;">🗑</button>
@@ -921,7 +921,6 @@
     ja: {
       'tab.monitor':'📊 環境','tab.log':'💧 給水','tab.analysis':'📈 分析','tab.table':'📋 参考',
       'settings.tolTemp':'温度 ±°C','settings.tolHum':'湿度 ±%RH',
-      'offline.banner':'オフライン中 — データはローカルに保存されます',
       'monitor.target_hum':'目標湿度:','monitor.ppfd_now':'現在PPFD:','monitor.ppfd_target':'/ 目標:',
       'vpd.too_low':'⚠ 低すぎ','vpd.too_high':'⚠ 高すぎ','vpd.warning':'注意','vpd.ok':'適正',
       'vpd.rec_warning':'境界付近です。急変に注意して微調整してください',
@@ -952,7 +951,6 @@
     en: {
       'tab.monitor':'📊 Monitor','tab.log':'💧 Feeding','tab.analysis':'📈 Analysis','tab.table':'📋 Reference',
       'settings.tolTemp':'Temp ±°C','settings.tolHum':'Humidity ±%RH',
-      'offline.banner':'Offline — Data is saved locally',
       'monitor.target_hum':'Target RH:','monitor.ppfd_now':'PPFD:','monitor.ppfd_target':'/ Target:',
       'vpd.too_low':'⚠ Too Low','vpd.too_high':'⚠ Too High','vpd.warning':'Caution','vpd.ok':'Optimal',
       'vpd.rec_warning':'Near boundary. Watch for sudden changes and fine-tune.',
@@ -2248,22 +2246,22 @@
     applyInlineVal('ppfd', val);
   }
 
-  function adjustCo2Level(delta) {
+  async function adjustCo2Level(delta) {
     const t = tents[currentTent];
     const v = Math.max(400, Math.min(1500, ((t.co2Level || 1000) + delta)));
     t.co2Level = v;
     document.getElementById('co2LevelVal').value = v;
-    dbPut('tents', t);
+    await dbPut('tents', t);
     update();
   }
-  function applyCo2Level(val) {
+  async function applyCo2Level(val) {
     const t = tents[currentTent];
     let v = parseInt(val, 10);
     if (isNaN(v)) v = 1000;
     v = Math.max(400, Math.min(1500, Math.round(v / 100) * 100));
     t.co2Level = v;
     document.getElementById('co2LevelVal').value = v;
-    dbPut('tents', t);
+    await dbPut('tents', t);
     update();
   }
 
@@ -2795,30 +2793,55 @@ function classifyVpd(vpd, lo, hi) {
       const glow = isCurrent ? `box-shadow:0 0 10px ${color};` : '';
       const border = isCurrent ? `border:1.5px solid ${color};` : 'border:1.5px solid transparent;';
       const stageLogs = logsByStage[key] || [];
-      const totalPages = Math.ceil(stageLogs.length / LOGS_PER_PAGE) || 1;
+      // 同日の写真ログをグループ化した表示アイテムを生成
+      const _seenPhotoDates = new Set();
+      const displayItems = [];
+      stageLogs.forEach(l => {
+        const _isPhoto = l.photo && l.type !== 'monitor' && (!l.fertilizers || l.fertilizers.length === 0);
+        if (_isPhoto) {
+          const d = getLogDate(l);
+          const dk = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          if (!_seenPhotoDates.has(dk)) {
+            _seenPhotoDates.add(dk);
+            const groupPhotos = stageLogs.filter(p => {
+              if (!p.photo || p.type === 'monitor' || (p.fertilizers && p.fertilizers.length > 0)) return false;
+              const pd = getLogDate(p);
+              return pd.getFullYear() === d.getFullYear() && pd.getMonth() === d.getMonth() && pd.getDate() === d.getDate();
+            });
+            displayItems.push({ _photoGroup: true, date: d, photos: groupPhotos });
+          }
+        } else {
+          displayItems.push(l);
+        }
+      });
+      const totalPages = Math.ceil(displayItems.length / LOGS_PER_PAGE) || 1;
       const curPage = Math.min((_stagePages[key]?.page || 0), totalPages - 1);
       _stagePages[key] = { page: curPage, total: totalPages };
-      const logsHtml = stageLogs.length > 0
-        ? stageLogs.map((l, idx) => {
+      const logsHtml = displayItems.length > 0
+        ? displayItems.map((item, idx) => {
             const hidden = idx >= (curPage + 1) * LOGS_PER_PAGE || idx < curPage * LOGS_PER_PAGE;
-            const isPhotoOnly = l.photo && l.type !== 'monitor' && (!l.fertilizers || l.fertilizers.length === 0);
-            if (isPhotoOnly) {
-              const d = getLogDate(l);
+            if (item._photoGroup) {
+              const { date: d, photos } = item;
               const dateLabel = `${d.getMonth()+1}/${d.getDate()}`;
-              const timeLabel = `${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
-              const pNoteHtml = l.note ? `<div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;padding-left:2px;">📝 ${esc(l.note)}</div>` : '';
-              const pLogId = String(l.id).replace(/'/g, "\\'");
-              return `<div class="slog-item" onclick="event.stopPropagation();editLog('${pLogId}')" style="${hidden ? 'display:none;' : ''}cursor:pointer;">
-                <div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:var(--text);">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="opacity:0.85;white-space:nowrap;">${dateLabel} 📷 ${timeLabel}</span>
-                    <img src="${l.photo}" style="width:44px;height:44px;object-fit:cover;border-radius:5px;cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation();(()=>{document.getElementById('overlayImg').src=this.src;document.getElementById('photoOverlay').style.display='flex';})()">
-                    <span style="flex:1;"></span>
-                    <button onclick="event.stopPropagation();deleteGalleryPhoto('${l.id}')" style="width:20px;height:20px;border-radius:50%;background:rgba(255,60,60,0.85);border:none;color:#fff;font-size:0.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;">✕</button>
-                  </div>${pNoteHtml}
-                </div>
+              let photosHtml = '';
+              for (let i = 0; i < photos.length; i += 3) {
+                const row = photos.slice(i, i + 3);
+                photosHtml += `<div style="display:flex;gap:6px;margin-top:6px;">`;
+                row.forEach(p => {
+                  const pt = getLogDate(p);
+                  const tl = `${pt.getHours()}:${String(pt.getMinutes()).padStart(2,'0')}`;
+                  const pid = String(p.id).replace(/'/g, "\\'");
+                  const pNote = p.note ? `<div style="font-size:0.6rem;color:rgba(255,255,255,0.6);text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📝 ${esc(p.note)}</div>` : '';
+                  photosHtml += `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;cursor:pointer;" onclick="event.stopPropagation();editLog('${pid}')"><img src="${p.photo}" style="width:88px;height:88px;object-fit:cover;border-radius:7px;" onclick="event.stopPropagation();(()=>{document.getElementById('overlayImg').src=this.src;document.getElementById('photoOverlay').style.display='flex';})()"><span style="font-size:0.6rem;opacity:0.7;">${tl}</span>${pNote}<button onclick="event.stopPropagation();deleteGalleryPhoto('${p.id}')" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(255,60,60,0.85);border:none;color:#fff;font-size:0.55rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button></div>`;
+                });
+                photosHtml += `</div>`;
+              }
+              return `<div class="slog-item" style="${hidden ? 'display:none;' : ''}padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:var(--text);">
+                <span style="opacity:0.85;">📷 ${dateLabel}</span>${photosHtml}
               </div>`;
             }
+            const l = item;
+            const isPhotoOnly = false;
             const isMonitor = l.type === 'monitor';
             const details = isMonitor
               ? [l.temp ? `${Math.round(l.temp * 10) / 10}°C` : '', l.hum ? `${Math.round(l.hum)}%` : '', l.leafVpd ? `VPD ${l.leafVpd}` : '', l.ppfd ? `PPFD ${l.ppfd}` : ''].filter(Boolean).join('　')
@@ -3103,6 +3126,7 @@ function classifyVpd(vpd, lo, hi) {
       if (f > 0) fi.textContent = `⚠ ${f} / ${_PIN_MAX} attempts`;
     }
     document.getElementById('pinOverlay').style.display = 'flex';
+    _randomizePinKeypad();
   }
 
   function _hidePinOverlay() {
@@ -3169,21 +3193,9 @@ function classifyVpd(vpd, lo, hi) {
           _pinNukeAllData();
           _showBlankScreen();
         } else if (f === 2) {
-          // 2回目: おバカメッセージ → 完全ブラック
+          // 2回目: 真っ黒画面のみ
           _hidePinOverlay();
-          const bs = document.getElementById('blankScreen');
-          bs.onclick = null;
-          bs.style.pointerEvents = 'none';
-          const msg = document.createElement('div');
-          msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:1.5rem;font-weight:700;opacity:1;transition:opacity 0.9s ease;font-family:inherit;text-align:center;line-height:1.7;pointer-events:none;';
-          msg.innerHTML = 'lol... seriously? 🤦<br><span style="font-size:0.9rem;font-weight:400;opacity:0.75;">that\'s not it, buddy</span>';
-          bs.style.position = 'relative';
-          bs.appendChild(msg);
-          bs.style.display = 'block';
-          setTimeout(() => {
-            msg.style.opacity = '0';
-            setTimeout(() => msg.remove(), 900);
-          }, 1800);
+          _showBlankScreen();
         } else {
           // 1回目
           document.getElementById('pinFailInfo').textContent = `⚠ ${f} / ${_PIN_MAX} attempts`;
@@ -3247,6 +3259,34 @@ function classifyVpd(vpd, lo, hi) {
     void el.offsetWidth;
     el.classList.add('pin-shake');
     el.addEventListener('animationend', () => el.classList.remove('pin-shake'), { once: true });
+  }
+
+  function _randomizePinKeypad() {
+    // 0〜9 をシャッフル
+    const digits = ['0','1','2','3','4','5','6','7','8','9'];
+    for (let i = digits.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [digits[i], digits[j]] = [digits[j], digits[i]];
+    }
+    // 11スロット中のランダムな位置にブランクを挿入
+    const blankPos = Math.floor(Math.random() * 11);
+    digits.splice(blankPos, 0, '');
+
+    const cells = document.querySelectorAll('.pin-digit');
+    cells.forEach((cell, i) => {
+      const d = digits[i];
+      if (!d) {
+        cell.textContent = '';
+        cell.style.visibility = 'hidden';
+        cell.style.pointerEvents = 'none';
+        cell.onclick = null;
+      } else {
+        cell.textContent = d;
+        cell.style.visibility = '';
+        cell.style.pointerEvents = '';
+        cell.onclick = () => pinPress(d);
+      }
+    });
   }
 
   function setupPin() {
@@ -3330,11 +3370,6 @@ function classifyVpd(vpd, lo, hi) {
     buildStageTable();
     buildMatrix();
     update();
-    // オフライン状態の監視
-    const banner = document.getElementById('offlineBanner');
-    window.addEventListener('online',  () => { banner.style.display = 'none'; });
-    window.addEventListener('offline', () => { banner.style.display = 'block'; });
-    if (!navigator.onLine) banner.style.display = 'block';
     // restore theme
     if (localStorage.getItem('vpdTheme') === 'light') {
       document.body.classList.add('light-mode');
